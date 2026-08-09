@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>26 VCC 스케줄표</title>
+<style>
+  :root {
+    --bg: #F1F5F9;
+    --card: #FFFFFF;
+    --border: #E2E8F0;
+    --text: #1E293B;
+    --text-sub: #64748B;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Pretendard", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 24px;
+  }
+  .wrap { max-width: 1200px; margin: 0 auto; }
+
+  /* ---------- 헤더 ---------- */
+  header { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 6px; }
+  header h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; }
+  .month-nav { display: flex; align-items: center; gap: 6px; }
+  .month-nav .month { font-size: 18px; font-weight: 700; color: var(--text-sub); min-width: 110px; text-align: center; }
+  .nav-btn {
+    border: 1.5px solid var(--border); background: var(--card); color: var(--text-sub);
+    width: 30px; height: 30px; border-radius: 8px; cursor: pointer;
+    font-size: 14px; font-weight: 700; line-height: 1;
+  }
+  .nav-btn:hover { background: #F8FAFC; color: var(--text); }
+  .toolbar { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+  .btn {
+    border: 1.5px solid var(--border); background: var(--card); color: var(--text);
+    font-family: inherit; font-size: 13px; font-weight: 700;
+    padding: 8px 14px; border-radius: 10px; cursor: pointer;
+    transition: background .12s, border-color .12s;
+  }
+  .btn:hover { background: #F8FAFC; border-color: #94A3B8; }
+  .btn.primary { background: #1E293B; color: #fff; border-color: #1E293B; }
+  .btn.primary:hover { background: #334155; }
+  .src-line { font-size: 12.5px; color: var(--text-sub); margin-bottom: 16px; min-height: 18px; }
+  .src-line b { color: var(--text); }
+  .src-line .err { color: #DC2626; }
+
+  /* ---------- 요약 카드 (대시보드) ---------- */
+  .summary { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-bottom: 10px; }
+  .sum-card {
+    background: var(--card); border: 1.5px solid var(--border); border-radius: 12px;
+    padding: 12px 14px; cursor: pointer; position: relative; overflow: hidden;
+    transition: transform .12s, box-shadow .12s;
+  }
+  .sum-card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--accent, var(--text-sub)); }
+  .sum-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(15,23,42,.08); }
+  .sum-card.active { box-shadow: 0 0 0 2px var(--accent, var(--text)) inset; }
+  .sum-card .label { font-size: 13px; font-weight: 700; color: var(--text-sub); }
+  .sum-card .count { font-size: 24px; font-weight: 800; margin-top: 2px; }
+  .sum-card .count small { font-size: 12px; font-weight: 600; color: var(--text-sub); margin-left: 2px; }
+  .sum-card .mini { font-size: 11.5px; color: var(--text-sub); font-weight: 600; margin-top: 1px; }
+
+  /* ---------- 전체 진행 현황 ---------- */
+  .progress-strip {
+    background: var(--card); border: 1.5px solid var(--border); border-radius: 12px;
+    padding: 12px 16px; margin-bottom: 20px;
+    display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  }
+  .progress-strip .pt { font-size: 13px; font-weight: 800; }
+  .pbar { flex: 1; min-width: 160px; height: 10px; background: #F1F5F9; border-radius: 999px; overflow: hidden; }
+  .pbar i { display: block; height: 100%; background: #10B981; border-radius: 999px; transition: width .25s; }
+  .pstat { font-size: 12.5px; font-weight: 700; color: var(--text-sub); display: flex; gap: 14px; }
+  .pstat b { color: var(--text); }
+  .pstat .done b { color: #047857; }
+  .pstat .wait b { color: #B45309; }
+
+  /* ---------- 달력 ---------- */
+  .calendar { background: var(--card); border: 1.5px solid var(--border); border-radius: 14px; overflow: hidden; }
+  .dow { display: grid; grid-template-columns: repeat(7, 1fr); border-bottom: 1.5px solid var(--border); background: #F8FAFC; }
+  .dow div { padding: 10px 0; text-align: center; font-size: 13px; font-weight: 700; color: var(--text-sub); }
+  .dow div:first-child { color: #EF4444; }
+  .dow div:last-child  { color: #3B82F6; }
+
+  .week { position: relative; border-bottom: 1px solid var(--border); }
+  .week:last-child { border-bottom: none; }
+  .week .cells { display: grid; grid-template-columns: repeat(7, 1fr); height: 100%; }
+  .cell { border-right: 1px solid var(--border); padding: 6px 8px; }
+  .cell:last-child { border-right: none; }
+  .cell .num { font-size: 13px; font-weight: 700; }
+  .cell.other .num { color: #CBD5E1; }
+  .cell.sun .num { color: #EF4444; }
+  .cell.sat .num { color: #3B82F6; }
+  .cell.other.sun .num, .cell.other.sat .num { color: #CBD5E1; }
+  .cell.today { background: #FFFBEB; }
+  .cell.today .num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 24px; height: 24px; border-radius: 50%; background: #F59E0B; color: #fff;
+  }
+  .cell.holiday { background: #FEF2F2; }
+  .cell.holiday .num { color: #EF4444; }
+  .cell .holi-name { display: block; font-size: 10.5px; font-weight: 700; color: #EF4444; margin-top: 2px; }
+
+  /* ---------- 일정 바 ---------- */
+  .bar {
+    position: absolute; height: 24px; border-radius: 6px;
+    font-size: 12px; font-weight: 600; color: #fff;
+    display: flex; align-items: center; gap: 4px; padding: 0 8px;
+    white-space: nowrap; overflow: hidden;
+    cursor: pointer; transition: filter .1s, transform .1s;
+    box-shadow: 0 1px 2px rgba(15,23,42,.15);
+  }
+  .bar:hover { filter: brightness(1.08); transform: translateY(-1px); z-index: 5; }
+  .bar.dimmed { opacity: .12; pointer-events: none; }
+  .bar.done { opacity: .45; }
+  .bar.done .bt { text-decoration: line-through; }
+  .bar.milestone { color: #1E293B; font-weight: 800; box-shadow: 0 0 0 1.5px #B45309 inset, 0 1px 2px rgba(15,23,42,.15); }
+  .bar .bt { overflow: hidden; text-overflow: ellipsis; }
+  .bar .ic { flex: 0 0 auto; font-size: 11px; }
+  .bar .sub-chip {
+    flex: 0 0 auto; background: rgba(255,255,255,.28); border-radius: 999px;
+    padding: 0 6px; font-size: 10.5px; font-weight: 800; line-height: 16px;
+  }
+  .bar.milestone .sub-chip { background: rgba(30,41,59,.15); }
+
+  /* ---------- 범례 ---------- */
+  .legend { display: flex; gap: 16px; margin: 14px 0 26px; flex-wrap: wrap; }
+  .legend span { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-sub); font-weight: 600; }
+  .legend i { width: 12px; height: 12px; border-radius: 4px; display: inline-block; }
+
+  /* ---------- 담당자별 업무표 ---------- */
+  .people h2 { font-size: 18px; font-weight: 800; margin-bottom: 12px; }
+  .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .tab {
+    border: 1.5px solid var(--border); background: var(--card);
+    font-family: inherit; font-size: 13px; font-weight: 700; color: var(--text-sub);
+    padding: 7px 14px; border-radius: 999px; cursor: pointer;
+    transition: background .12s, color .12s, border-color .12s;
+  }
+  .tab:hover { border-color: #94A3B8; }
+  .tab.active { background: #1E293B; color: #fff; border-color: #1E293B; }
+  .tab.collab { border-color: #C4B5FD; color: #6D28D9; }
+  .tab.collab.active { background: #6D28D9; color: #fff; border-color: #6D28D9; }
+  .tab.leader { border-color: #FCD34D; color: #B45309; }
+  .tab.leader.active { background: #B45309; color: #fff; border-color: #B45309; }
+  .tab small { font-weight: 600; opacity: .75; margin-left: 4px; }
+
+  .task-table-wrap { background: var(--card); border: 1.5px solid var(--border); border-radius: 14px; overflow: auto; }
+  table.tasks { width: 100%; border-collapse: collapse; min-width: 760px; }
+  .tasks th {
+    text-align: left; font-size: 12.5px; color: var(--text-sub);
+    background: #F8FAFC; padding: 10px 12px; border-bottom: 1.5px solid var(--border);
+    white-space: nowrap;
+  }
+  .tasks th.c, .tasks td.c { text-align: center; }
+  .tasks td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 13.5px; vertical-align: middle; }
+  .tasks tr:last-child td { border-bottom: none; }
+  .tasks tr:hover td { background: #F8FAFC; }
+  .tasks tr.row-done td { color: #94A3B8; }
+  .tasks tr.row-done .t-title { text-decoration: line-through; }
+  .tasks tr.row-sub td { background: #FAFBFC; }
+  .tasks tr.row-sub:hover td { background: #F1F5F9; }
+  .t-title { font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .row-sub .t-title { font-weight: 600; padding-left: 20px; font-size: 13px; }
+  .sub-arrow { color: #94A3B8; font-weight: 400; }
+  .t-parent-ref { font-size: 11px; color: #94A3B8; font-weight: 600; }
+  .t-dot { width: 9px; height: 9px; border-radius: 50%; flex: 0 0 auto; }
+  .t-memo { font-size: 12px; color: var(--text-sub); font-weight: 400; margin-top: 2px; }
+  .t-date, .t-owner { white-space: nowrap; color: var(--text-sub); font-weight: 600; font-size: 12.5px; }
+  .co-badge { background: #EDE9FE; color: #6D28D9; padding: 1.5px 7px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+  .chk { width: 18px; height: 18px; cursor: pointer; accent-color: #10B981; }
+  .chk.confirm { accent-color: #F59E0B; }
+  .st-badge { padding: 2px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 700; white-space: nowrap; }
+  .st-완료     { background: #D1FAE5; color: #047857; }
+  .st-컨펌대기 { background: #FEF3C7; color: #B45309; }
+  .st-진행전   { background: #F1F5F9; color: #64748B; }
+  .empty-row { text-align: center; color: var(--text-sub); padding: 22px !important; font-size: 13px; }
+
+  /* ---------- 범례: 상태 아이콘 ---------- */
+  .legend i.lg-ic {
+    width: auto; height: auto; border-radius: 0; background: none;
+    font-style: normal; font-size: 12.5px; line-height: 1;
+  }
+  .legend i.lg-ic.od { color: #DC2626; }
+  .legend .legend-sep { width: 1px; height: 16px; border-radius: 0; background: var(--border); align-self: center; }
+
+  /* ---------- 🏷 행사 색인 토글 ---------- */
+  .event-toggles { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .event-toggles .et-label { font-size: 13px; font-weight: 800; color: var(--text-sub); margin-right: 2px; }
+  .et-btn {
+    border: 1.5px solid var(--border); background: var(--card);
+    font-family: inherit; font-size: 12.5px; font-weight: 700; color: var(--text-sub);
+    padding: 6px 13px; border-radius: 999px; cursor: pointer;
+    transition: background .12s, color .12s, border-color .12s;
+  }
+  .et-btn:hover { border-color: #7DD3FC; }
+  .et-btn.active { background: #0EA5E9; color: #fff; border-color: #0EA5E9; }
+
+  /* ---------- 검색 · 필터 바 ---------- */
+  .filter-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+  .search-box {
+    display: flex; align-items: center; gap: 7px;
+    background: var(--card); border: 1.5px solid var(--border); border-radius: 10px;
+    padding: 7px 11px; flex: 0 1 320px; min-width: 220px;
+  }
+  .search-box:focus-within { border-color: #94A3B8; }
+  .search-box .search-ic { font-size: 13px; color: var(--text-sub); flex: 0 0 auto; }
+  .search-box input {
+    border: none; outline: none; background: transparent; flex: 1; min-width: 0;
+    font-family: inherit; font-size: 13px; color: var(--text);
+  }
+  .search-box .search-clear {
+    border: none; background: #F1F5F9; color: var(--text-sub);
+    width: 20px; height: 20px; border-radius: 50%; cursor: pointer;
+    font-size: 11px; font-weight: 700; flex: 0 0 auto; line-height: 1;
+  }
+  .search-box .search-clear:hover { background: #E2E8F0; color: var(--text); }
+  .active-filters { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .filter-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: #EEF2FF; color: #3730A3; border: 1px solid #C7D2FE;
+    border-radius: 999px; padding: 4px 6px 4px 11px; font-size: 12px; font-weight: 700;
+  }
+  .filter-chip .x { cursor: pointer; opacity: .6; font-weight: 800; padding: 0 3px; }
+  .filter-chip .x:hover { opacity: 1; }
+  .btn.filter-reset { padding: 7px 12px; font-size: 12.5px; color: #DC2626; border-color: #FCA5A5; }
+  .btn.filter-reset:hover { background: #FEF2F2; border-color: #F87171; }
+
+  /* ---------- 지연(기한 초과) 표시 ---------- */
+  .bar.overdue { box-shadow: 0 0 0 2px #DC2626 inset, 0 1px 2px rgba(15,23,42,.15); }
+  .st-지연 { background: #FEE2E2; color: #DC2626; }
+  .tasks tr.row-overdue td { background: #FEF6F6; }
+  .tasks tr.row-overdue:hover td { background: #FEECEC; }
+  .pstat .over b { color: #DC2626; }
+
+  /* ---------- 툴팁 ---------- */
+  #tooltip {
+    position: fixed; z-index: 100; width: 280px;
+    background: #fff; border: 1.5px solid var(--border); border-radius: 12px;
+    box-shadow: 0 12px 32px rgba(15,23,42,.18);
+    padding: 14px 16px; display: none; pointer-events: none;
+  }
+  #tooltip .tt-cat { display: inline-block; font-size: 11px; font-weight: 700; color: #fff; padding: 2.5px 9px; border-radius: 999px; margin-bottom: 7px; }
+  #tooltip .tt-title { font-size: 15px; font-weight: 800; margin-bottom: 9px; line-height: 1.35; }
+  #tooltip .tt-row { display: flex; gap: 8px; font-size: 12.5px; margin-bottom: 4px; }
+  #tooltip .tt-row .k { color: var(--text-sub); flex: 0 0 44px; font-weight: 600; }
+  #tooltip .tt-memo { margin-top: 9px; padding-top: 9px; border-top: 1px dashed var(--border); font-size: 12.5px; color: var(--text-sub); line-height: 1.5; }
+  #tooltip .tt-click { margin-top: 8px; font-size: 11.5px; color: #6D28D9; font-weight: 700; }
+
+  /* ---------- 상세 패널 ---------- */
+  #detail-backdrop {
+    position: fixed; inset: 0; background: rgba(15,23,42,.45);
+    z-index: 90; display: none;
+  }
+  #detail {
+    position: fixed; z-index: 95; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    width: min(560px, 92vw); max-height: 82vh; overflow: auto;
+    background: #fff; border-radius: 16px; box-shadow: 0 24px 64px rgba(15,23,42,.3);
+    padding: 22px 24px; display: none;
+  }
+  #detail .d-head { display: flex; align-items: flex-start; gap: 10px; }
+  #detail .d-cat { display: inline-block; font-size: 11.5px; font-weight: 700; color: #fff; padding: 3px 10px; border-radius: 999px; }
+  #detail .d-close {
+    margin-left: auto; border: none; background: #F1F5F9; color: var(--text-sub);
+    width: 30px; height: 30px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 700;
+  }
+  #detail .d-close:hover { background: #E2E8F0; color: var(--text); }
+  #detail .d-title { font-size: 19px; font-weight: 800; margin: 10px 0 12px; line-height: 1.3; }
+  #detail .d-row { display: flex; gap: 10px; font-size: 13.5px; margin-bottom: 6px; }
+  #detail .d-row .k { color: var(--text-sub); flex: 0 0 52px; font-weight: 600; }
+  #detail .d-memo { margin-top: 10px; padding: 10px 12px; background: #F8FAFC; border-radius: 10px; font-size: 13px; color: var(--text-sub); line-height: 1.5; }
+  #detail .d-check { display: flex; gap: 18px; margin-top: 14px; padding-top: 14px; border-top: 1.5px solid var(--border); font-size: 13.5px; font-weight: 700; }
+  #detail .d-check label { display: flex; align-items: center; gap: 7px; cursor: pointer; }
+  #detail .d-subs-title { font-size: 14px; font-weight: 800; margin: 18px 0 8px; }
+  #detail .d-subs-title small { color: var(--text-sub); font-weight: 600; }
+  #detail .d-sub {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px; border: 1.5px solid var(--border); border-radius: 10px; margin-bottom: 7px;
+  }
+  #detail .d-sub.sdone { background: #F8FAFC; }
+  #detail .d-sub.sdone .s-t { text-decoration: line-through; color: #94A3B8; }
+  #detail .d-sub .s-t { font-size: 13.5px; font-weight: 700; flex: 1; }
+  #detail .d-sub .s-meta { font-size: 12px; color: var(--text-sub); font-weight: 600; white-space: nowrap; }
+  #detail .d-none { font-size: 12.5px; color: var(--text-sub); }
+
+  .hint { font-size: 12.5px; color: var(--text-sub); }
+
+  /* ---------- 모바일 최적화 ---------- */
+  @media (max-width: 800px) {
+    body { padding: 12px; }
+    header h1 { font-size: 20px; }
+    .summary { grid-template-columns: repeat(4, 1fr); }
+  }
+  @media (max-width: 560px) {
+    body { padding: 8px; }
+    header { gap: 8px; }
+    header h1 { font-size: 18px; width: 100%; }
+    .month-nav .month { font-size: 15px; min-width: 88px; }
+    .nav-btn { width: 28px; height: 28px; }
+    .toolbar { margin-left: 0; width: 100%; }
+    .toolbar .btn { flex: 1; padding: 8px 4px; font-size: 12px; white-space: nowrap; }
+    .src-line { font-size: 11.5px; word-break: keep-all; }
+    .summary { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .sum-card { padding: 8px 9px; border-radius: 10px; }
+    .sum-card .label { font-size: 11px; }
+    .sum-card .count { font-size: 17px; }
+    .sum-card .count small { font-size: 10px; }
+    .sum-card .mini { font-size: 9.5px; }
+    .progress-strip { padding: 10px 12px; gap: 10px; margin-bottom: 14px; }
+    .progress-strip .pt { font-size: 12px; }
+    .pstat { gap: 8px; font-size: 11px; }
+    .dow div { padding: 6px 0; font-size: 11px; }
+    .cell { padding: 3px 4px; }
+    .cell .num { font-size: 10.5px; }
+    .cell.today .num { width: 18px; height: 18px; }
+    .cell .holi-name { font-size: 8.5px; }
+    .bar { height: 17px; font-size: 9.5px; padding: 0 4px; gap: 2px; border-radius: 4px; }
+    .bar .ic { font-size: 8.5px; }
+    .bar .sub-chip { font-size: 8.5px; line-height: 12px; padding: 0 4px; }
+    .legend { gap: 10px; margin: 10px 0 16px; }
+    .legend span { font-size: 10.5px; }
+    .legend i { width: 10px; height: 10px; }
+    .filter-bar { gap: 8px; margin-bottom: 12px; }
+    .search-box { flex: 1 1 100%; min-width: 0; }
+    .filter-chip { font-size: 11px; }
+    .event-toggles { gap: 6px; margin-bottom: 12px; }
+    .event-toggles .et-label { font-size: 12px; width: 100%; }
+    .et-btn { padding: 5px 11px; font-size: 11.5px; }
+    .people h2 { font-size: 15px; }
+    .people h2 .hint { display: block; margin-top: 4px; font-size: 11px; word-break: keep-all; }
+    .tab { padding: 6px 10px; font-size: 11.5px; }
+    table.tasks { min-width: 620px; }
+    .tasks th, .tasks td { padding: 8px 7px; font-size: 12px; }
+    .t-memo { font-size: 11px; }
+    .t-date, .t-owner { font-size: 11px; }
+    .chk { width: 16px; height: 16px; }
+    #detail { padding: 16px 18px; }
+    #detail .d-title { font-size: 16px; }
+    #detail .d-row { font-size: 12.5px; }
+    #tooltip { width: min(260px, 88vw); }
+  }
+
+  /* ---------- 모바일: 업무표를 카드형으로 (가로 스크롤 제거) ---------- */
+  @media (max-width: 560px) {
+    .task-table-wrap { overflow: visible; border: none; background: transparent; border-radius: 0; }
+    table.tasks { display: block; width: 100%; min-width: 0; }
+    .tasks thead { display: none; }
+    .tasks tbody { display: block; }
+    .tasks tr {
+      display: flex; flex-direction: column; gap: 2px;
+      background: var(--card); border: 1.5px solid var(--border);
+      border-radius: 12px; padding: 12px 14px; margin-bottom: 10px;
+    }
+    .tasks tr:hover td { background: transparent; }
+    .tasks tr.row-sub { margin-left: 16px; background: #FAFBFC; }
+    .tasks tr.row-overdue { border-color: #FCA5A5; }
+    .tasks tr.row-overdue td, .tasks tr.row-sub td { background: transparent; }
+    .tasks td {
+      display: flex; align-items: center; gap: 8px;
+      border: none; padding: 3px 0; font-size: 13px; white-space: normal;
+    }
+    .tasks td.c { text-align: left; justify-content: flex-start; }
+    .tasks td::before {
+      content: attr(data-label); flex: 0 0 58px;
+      font-size: 11px; font-weight: 700; color: var(--text-sub);
+    }
+    /* 카드 안 순서 재배치: 제목 → 기간 → 담당 → 상태 → 완료 → 컨펌 */
+    .tasks td.cell-title   { order: 1; flex-direction: column; align-items: flex-start; gap: 3px; margin-bottom: 4px; }
+    .tasks td.cell-date    { order: 2; }
+    .tasks td.cell-owner   { order: 3; }
+    .tasks td.cell-status  { order: 4; }
+    .tasks td.cell-done    { order: 5; }
+    .tasks td.cell-confirm { order: 6; }
+    .tasks td.cell-title::before { display: none; }
+    .tasks td.cell-title .t-title { flex-wrap: wrap; word-break: keep-all; font-size: 14px; }
+    .tasks td.cell-title .t-memo { padding-left: 0 !important; }
+    .row-sub .t-title { padding-left: 0; }
+    .tasks .chk { width: 20px; height: 20px; }
+    .tasks td.empty-row { justify-content: center; text-align: center; padding: 18px 0; }
+    .tasks td.empty-row::before { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 id="page-title">26 VCC 스케줄표</h1>
+    <div class="month-nav">
+      <button class="nav-btn" id="btn-prev">◀</button>
+      <span class="month" id="page-month"></span>
+      <button class="nav-btn" id="btn-next">▶</button>
+    </div>
+    <div class="toolbar">
+      <button class="btn primary" id="btn-sheet" style="display:none">📝 구글 시트에서 수정</button>
+      <button class="btn" id="btn-sync" style="display:none">🔄 동기화</button>
+      <button class="btn primary" id="btn-upload">📤 엑셀 업로드</button>
+      <button class="btn" id="btn-reset">↺ 기본값 복원</button>
+      <input type="file" id="file-input" accept=".xlsx,.xls" hidden>
+    </div>
+  </header>
+  <div class="src-line" id="src-line"></div>
+
+  <section class="summary" id="summary"></section>
+
+  <section class="event-toggles" id="event-toggles" style="display:none"></section>
+
+  <section class="progress-strip">
+    <span class="pt">전체 진행률</span>
+    <div class="pbar"><i id="pbar-fill" style="width:0%"></i></div>
+    <div class="pstat">
+      <span class="done">완료 <b id="st-done">0</b></span>
+      <span class="wait">컨펌대기 <b id="st-wait">0</b></span>
+      <span>미완료 <b id="st-todo">0</b></span>
+      <span class="over">지연 <b id="st-over">0</b></span>
+    </div>
+  </section>
+
+  <section class="filter-bar">
+    <div class="search-box">
+      <span class="search-ic">🔍</span>
+      <input type="text" id="search-input" placeholder="업무·담당·메모 검색" autocomplete="off">
+      <button class="search-clear" id="search-clear" style="display:none" title="검색어 지우기">✕</button>
+    </div>
+    <div class="active-filters" id="active-filters"></div>
+    <button class="btn filter-reset" id="btn-filter-reset" style="display:none">↺ 필터 초기화</button>
+  </section>
+
+  <section class="calendar">
+    <div class="dow">
+      <div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div>
+    </div>
+    <div id="weeks"></div>
+  </section>
+
+  <div class="legend" id="legend"></div>
+
+  <section class="people">
+    <h2>👤 담당자별 업무 현황 <span class="hint">— 컨펌요청된 업무는 👑 팀장 확인 탭에, 협업자가 붙은 업무는 🤝 협업 탭에 모입니다 · 달력의 일정을 클릭하면 세부업무가 열립니다</span></h2>
+    <div class="tabs" id="person-tabs"></div>
+    <div class="task-table-wrap">
+      <table class="tasks">
+        <thead>
+          <tr>
+            <th class="c" style="width:56px">완료</th>
+            <th class="c" style="width:76px">컨펌요청</th>
+            <th>업무</th>
+            <th style="width:150px">기간</th>
+            <th style="width:110px">담당</th>
+            <th class="c" style="width:96px">상태</th>
+          </tr>
+        </thead>
+        <tbody id="task-body"></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<div id="tooltip"></div>
+<div id="detail-backdrop"></div>
+<div id="detail"></div>
+
+<script src="xlsx.full.min.js"></script>
+<script>
+// schedule-data.js / config.js 는 자주 바뀌는 파일이라 항상 최신본을 읽도록 캐시를 우회
+document.write('<script src="schedule-data.js?v=' + Date.now() + '"><\/script>');
+document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
+</script>
+<script>
+(function () {
+  const CATEGORIES = ["교육", "영상", "디자인", "홈페이지", "마케팅", "중요일정"];
+  const CAT_ALIAS = { "강사섭외": "교육", "강사 섭외": "교육", "마일스톤": "중요일정" };
+  const COLORS = {
+    "교육":     "#EC4899",
+    "영상":     "#2196F3",
+    "디자인":   "#0F766E",
+    "홈페이지": "#C2410C",
+    "마케팅":   "#6B7280",
+    "중요일정": "#F5A623"
+  };
+  const colorOf = c => COLORS[c] || "#94A3B8";
+  const LS_EVENTS = "vccSchedule.events";
+  const LS_CHECKS = "vccSchedule.checks";
+  const COLLAB = "__collab__";
+  const LEADER = "__leader__";   // 👑 팀장 확인 탭: 컨펌요청 대기 업무 모아보기
+
+  // ---------- 동작 모드 ----------
+  const CFG = (typeof CONFIG !== "undefined" && CONFIG) ? CONFIG : {};
+  const CLOUD = !!(CFG.scriptUrl && String(CFG.scriptUrl).trim()); // 구글 시트 연동 모드
+  const APP_TITLE = CFG.title || SCHEDULE_DATA.title;
+
+  // ---------- 상태 ----------
+  let events = [];
+  let checks = {};            // { id: { done: bool, confirm: bool } }
+  let catFilter = null;
+  let personFilter = null;    // 담당자명 | COLLAB | null
+  let searchText = "";        // 업무·담당·메모 검색어
+  let eventFilter = null;     // 🏷 행사 태그 필터 (null = 전체)
+  let view = null;            // { year, month }
+  let detailId = null;
+  let sourceInfo = "기본 데이터 (schedule-data.js)";
+  let lastPayload = "";       // 클라우드 응답 캐시 (변경 없으면 재렌더 생략)
+
+  // 2026년 대한민국 법정공휴일 (대체공휴일 포함) — 앱에 내장, 어느 달로 넘겨도 자동 표시
+  const KR_HOLIDAYS_2026 = [
+    { date: "2026-01-01", name: "신정" },
+    { date: "2026-02-16", name: "설날" },
+    { date: "2026-02-17", name: "설날" },
+    { date: "2026-02-18", name: "설날" },
+    { date: "2026-03-01", name: "삼일절" },
+    { date: "2026-03-02", name: "대체공휴일" },      // 삼일절(일) 대체
+    { date: "2026-05-05", name: "어린이날" },
+    { date: "2026-05-24", name: "부처님오신날" },
+    { date: "2026-05-25", name: "대체공휴일" },      // 부처님오신날(일) 대체
+    { date: "2026-06-06", name: "현충일" },
+    { date: "2026-08-15", name: "광복절" },
+    { date: "2026-08-17", name: "대체공휴일" },      // 광복절(토) 대체
+    { date: "2026-09-24", name: "추석" },
+    { date: "2026-09-25", name: "추석" },
+    { date: "2026-09-26", name: "추석" },
+    { date: "2026-09-28", name: "대체공휴일" },      // 추석 연휴 대체
+    { date: "2026-10-03", name: "개천절" },
+    { date: "2026-10-05", name: "대체공휴일" },      // 개천절(토) 대체
+    { date: "2026-10-09", name: "한글날" },
+    { date: "2026-12-25", name: "성탄절" }
+  ];
+  const HOLIDAYS = {};
+  KR_HOLIDAYS_2026.forEach(h => { HOLIDAYS[h.date] = h.name; });
+  // 데이터(config.js·schedule-data.js)에 적어둔 공휴일은 위에 더해지고, 같은 날짜면 덮어씀 (예: 7/17 제헌절)
+  ((CFG.holidays || SCHEDULE_DATA.holidays) || []).forEach(h => { HOLIDAYS[h.date] = h.name; });
+
+  // ---------- 유틸 ----------
+  const esc = s => String(s == null ? "" : s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  const parse = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
+  const ymd = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  const fmt = d => (d.getMonth() + 1) + "/" + d.getDate() + " (" + "일월화수목금토"[d.getDay()] + ")";
+  const sameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  const chk = id => checks[id] || { done: false, confirm: false };
+  const statusOf = ev => chk(ev.id).done ? "완료" : chk(ev.id).confirm ? "컨펌대기" : "진행전";
+  const periodOf = ev => sameDay(ev._start, ev._end) ? fmt(ev._start) : fmt(ev._start) + " ~ " + fmt(ev._end);
+
+  // 담당: 쉼표로 나열한 전원이 동등한 정식 담당 (예: "교육1, 교육2")
+  // 협업자: 별도 필드 — 다른 파트에서 지원하는 사람. 협업자가 있는 업무만 🤝 협업 탭에 표시
+  const ownersOf = ev => String(ev.owner || "").split(/[,·/]+/).map(s => s.trim()).filter(Boolean);
+  const helpersOf = ev => String(ev.helper || "").split(/[,·/]+/).map(s => s.trim()).filter(Boolean);
+  // 행사: 한 업무가 여러 행사에 걸칠 수 있어 쉼표로 나열 가능 (색인 토글의 원천)
+  const eventsOf = ev => String(ev.event || "").split(/[,·/]+/).map(s => s.trim()).filter(Boolean);
+  const isCollab = ev => helpersOf(ev).length > 0;
+  const participates = (ev, name) => ownersOf(ev).includes(name) || helpersOf(ev).includes(name);
+  const ownerLabel = ev => {
+    const os = ownersOf(ev), hs = helpersOf(ev);
+    let html = os.length ? esc(os.join(", ")) : "-";
+    if (hs.length) html += ' <span class="co-badge">협업: ' + esc(hs.join(", ")) + "</span>";
+    return html;
+  };
+
+  const mains = () => events.filter(e => !e.parent);
+  const subsOf = id => events.filter(e => e.parent === id).sort((a, b) => a._start - b._start || a.id - b.id);
+  const byId = id => events.find(e => e.id === id);
+  // 주말·공휴일은 작업일이 아님 → 달력 바가 이 날들을 건너뛰고 그려짐
+  const isWorkday = d => d.getDay() !== 0 && d.getDay() !== 6 && !HOLIDAYS[ymd(d)];
+  // 지연: 종료일이 오늘 이전인데 아직 완료가 아닌 업무
+  const startOfToday = () => { const t = new Date(); return new Date(t.getFullYear(), t.getMonth(), t.getDate()); };
+  const isOverdue = ev => !chk(ev.id).done && ev._end < startOfToday();
+
+  function normalizeEvents(raw) {
+    const list = raw.map(ev => ({
+      ...ev,
+      category: CAT_ALIAS[ev.category] || ev.category,
+      parent: ev.parent ? Number(ev.parent) : undefined,
+      _start: parse(ev.start),
+      _end: ev.end ? parse(ev.end) : parse(ev.start)
+    }));
+    const ids = new Set(list.map(e => e.id));
+    list.forEach(ev => {
+      if (ev.parent && !ids.has(ev.parent)) ev.parent = undefined;
+      if (ev.parent) {
+        const p = list.find(e => e.id === ev.parent);
+        if (p) {
+          if (!ev.category || ev.category === "미지정") ev.category = p.category;
+          if (!ev.event) ev.event = p.event;   // 세부업무는 상위의 행사·묶음을 상속
+          if (!ev.group) ev.group = p.group;
+        }
+      }
+    });
+    // 숨김 처리: 숨김 컬럼에 값이 있는 업무(+그 세부업무)는 화면 전체에서 제외 (데이터·체크 기록은 유지)
+    const hiddenIds = new Set(list.filter(e => String(e.hidden || "").trim() !== "").map(e => e.id));
+    return list.filter(e => !hiddenIds.has(e.id) && !(e.parent && hiddenIds.has(e.parent)));
+  }
+
+  // ---------- 로컬 모드: 저장 / 불러오기 ----------
+  function loadState() {
+    try { checks = JSON.parse(localStorage.getItem(LS_CHECKS)) || {}; } catch (e) { checks = {}; }
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(LS_EVENTS)); } catch (e) {}
+    if (saved && Array.isArray(saved.events) && saved.events.length) {
+      events = normalizeEvents(saved.events);
+      sourceInfo = "엑셀 업로드: <b>" + esc(saved.fileName) + "</b> (" + esc(saved.uploadedAt) + ")";
+    } else {
+      events = normalizeEvents(SCHEDULE_DATA.events);
+      sourceInfo = "기본 데이터 (schedule-data.js) — 엑셀 업로드로 교체할 수 있습니다";
+    }
+    view = detectMonth();
+  }
+  const saveChecks = () => localStorage.setItem(LS_CHECKS, JSON.stringify(checks));
+
+  // ---------- 클라우드 모드: 구글 시트 연동 ----------
+  async function loadCloud(showErr, force) {
+    const url = CFG.scriptUrl + (CFG.scriptUrl.includes("?") ? "&" : "?") + "t=" + Date.now();
+    const res = await fetch(url).catch(err => { throw new Error("네트워크 오류"); });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const text = await res.text();
+    if (!force && text === lastPayload) return;   // 변경 없음 → 화면 유지
+    lastPayload = text;
+    let data;
+    try { data = JSON.parse(text); } catch (e) { throw new Error("응답 형식 오류 — 웹 앱 배포 설정(액세스: 모든 사용자)을 확인하세요"); }
+    events = normalizeEvents(data.events || []);
+    checks = data.checks || {};
+    if (!view) view = detectMonth();
+    render();
+    if (detailId != null) fillDetail(detailId);
+    sourceInfo = "구글 시트 연동 · 마지막 동기화 " + new Date().toLocaleTimeString("ko-KR");
+    setSrcLine("데이터: " + sourceInfo);
+  }
+
+  function pushCheck(id, key, val) {
+    fetch(CFG.scriptUrl, { method: "POST", body: JSON.stringify({ id, key, value: val }) })
+      .then(r => r.json())
+      .then(d => {
+        if (d && d.checks) {
+          checks = d.checks;
+          lastPayload = ""; // 다음 폴링 때 최신 상태 다시 반영
+          render();
+          if (detailId != null) fillDetail(detailId);
+        }
+      })
+      .catch(() => setSrcLine('<span class="err">⚠ 체크 저장 실패 — 네트워크 확인 후 다시 체크해주세요. (화면 표시는 임시 반영 상태)</span>'));
+  }
+
+  function detectMonth() {
+    const cnt = {};
+    events.forEach(ev => {
+      const k = ev._start.getFullYear() + "-" + ev._start.getMonth();
+      cnt[k] = (cnt[k] || 0) + 1;
+    });
+    let best = null, n = -1;
+    Object.entries(cnt).forEach(([k, v]) => { if (v > n) { n = v; best = k; } });
+    if (!best) { const now = new Date(); return { year: now.getFullYear(), month: now.getMonth() + 1 }; }
+    const [y, m] = best.split("-").map(Number);
+    return { year: y, month: m + 1 };
+  }
+
+  document.getElementById("btn-prev").onclick = () => shiftMonth(-1);
+  document.getElementById("btn-next").onclick = () => shiftMonth(1);
+  // 화면 크기 변경 시 달력 바 배치 재계산 (모바일 회전 등)
+  let resizeTimer;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => { if (view) renderCalendar(); }, 200);
+  });
+  function shiftMonth(d) {
+    const m = new Date(view.year, view.month - 1 + d, 1);
+    view = { year: m.getFullYear(), month: m.getMonth() + 1 };
+    renderCalendar();
+  }
+
+  // ---------- 엑셀 업로드 (로컬 모드 전용) ----------
+  function excelDate(v) {
+    if (v == null || v === "") return null;
+    let d = null;
+    if (v instanceof Date) d = v;
+    else if (typeof v === "number") d = new Date(Math.round((v - 25569) * 86400 * 1000));
+    else {
+      const s = String(v).trim().replace(/[./]/g, "-").replace(/-+$/, "");
+      const m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+      if (m) return m[1] + "-" + String(m[2]).padStart(2, "0") + "-" + String(m[3]).padStart(2, "0");
+      return null;
+    }
+    if (isNaN(d)) return null;
+    return ymd(d);
+  }
+
+  function handleFile(file) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      let rows;
+      try {
+        const wb = XLSX.read(new Uint8Array(e.target.result), { type: "array", cellDates: true });
+        const ws = wb.Sheets["일정"] || wb.Sheets[wb.SheetNames[0]];
+        rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
+      } catch (err) {
+        setSrcLine('<span class="err">⚠ 파일을 읽지 못했습니다. 엑셀(.xlsx) 파일인지 확인해주세요.</span>');
+        return;
+      }
+      const hi = rows.findIndex(r => r && r.includes("제목") && r.includes("시작일"));
+      if (hi === -1) {
+        setSrcLine('<span class="err">⚠ 헤더(번호/제목/분류/시작일…)를 찾지 못했습니다. VCC-일정입력.xlsx 양식을 사용해주세요.</span>');
+        return;
+      }
+      const col = {};
+      rows[hi].forEach((h, i) => { if (h != null) col[String(h).trim()] = i; });
+
+      const parsed = [];
+      const skipped = [];
+      const seenIds = new Set();
+      rows.slice(hi + 1).forEach((r, idx) => {
+        if (!r || r.every(v => v == null || String(v).trim() === "")) return;
+        const rowNo = hi + idx + 2;
+        const id = Number(r[col["번호"]]);
+        const parent = col["상위번호"] != null && r[col["상위번호"]] != null && String(r[col["상위번호"]]).trim() !== ""
+          ? Number(r[col["상위번호"]]) : undefined;
+        const title = r[col["제목"]] == null ? "" : String(r[col["제목"]]).trim();
+        const category = r[col["분류"]] == null ? "" : String(r[col["분류"]]).trim();
+        const start = excelDate(r[col["시작일"]]);
+        const end = excelDate(r[col["종료일"]]);
+        if (!id || !title || !start) { skipped.push(rowNo + "행(번호/제목/시작일 확인)"); return; }
+        if (seenIds.has(id)) { skipped.push(rowNo + "행(번호 " + id + " 중복)"); return; }
+        seenIds.add(id);
+        parsed.push({
+          id, parent, title,
+          category: CAT_ALIAS[category] || category || "미지정",
+          start, end: end || undefined,
+          owner: r[col["담당"]] == null ? "" : String(r[col["담당"]]).trim(),
+          helper: col["협업자"] != null && r[col["협업자"]] != null ? String(r[col["협업자"]]).trim() : "",
+          event: col["행사"] != null && r[col["행사"]] != null ? String(r[col["행사"]]).trim() : "",
+          group: col["묶음"] != null && r[col["묶음"]] != null ? String(r[col["묶음"]]).trim() : "",
+          hidden: col["숨김"] != null && r[col["숨김"]] != null ? String(r[col["숨김"]]).trim() : "",
+          memo: r[col["메모"]] == null ? "" : String(r[col["메모"]]).trim()
+        });
+      });
+
+      if (!parsed.length) {
+        setSrcLine('<span class="err">⚠ 반영할 수 있는 일정이 없습니다. 번호/제목/시작일이 채워져 있는지 확인해주세요.</span>');
+        return;
+      }
+
+      const uploadedAt = new Date().toLocaleString("ko-KR");
+      localStorage.setItem(LS_EVENTS, JSON.stringify({ fileName: file.name, uploadedAt, events: parsed }));
+      loadState();
+      personFilter = null; catFilter = null;
+      render();
+      let msg = "✅ <b>" + parsed.length + "건</b> 반영됨 — " + sourceInfo;
+      if (skipped.length) msg += ' <span class="err">/ 제외: ' + esc(skipped.join(", ")) + "</span>";
+      setSrcLine(msg);
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  const setSrcLine = html => { document.getElementById("src-line").innerHTML = html; };
+
+  document.getElementById("btn-upload").onclick = () => document.getElementById("file-input").click();
+  document.getElementById("file-input").addEventListener("change", e => {
+    if (e.target.files[0]) handleFile(e.target.files[0]);
+    e.target.value = "";
+  });
+
+  // confirm() 팝업은 미리보기 환경에서 화면을 얼릴 수 있어 2단계 클릭 방식 사용
+  let resetArmed = null;
+  document.getElementById("btn-reset").onclick = e => {
+    const btn = e.currentTarget;
+    if (!resetArmed) {
+      btn.textContent = "⚠ 다시 클릭하면 복원됩니다";
+      resetArmed = setTimeout(() => { resetArmed = null; btn.textContent = "↺ 기본값 복원"; }, 4000);
+      return;
+    }
+    clearTimeout(resetArmed); resetArmed = null;
+    btn.textContent = "↺ 기본값 복원";
+    localStorage.removeItem(LS_EVENTS);
+    loadState();
+    personFilter = null; catFilter = null;
+    render();
+    setSrcLine("데이터: " + sourceInfo + " (완료/컨펌 체크는 유지됨)");
+  };
+
+  // ---------- 요약 카드 ----------
+  function renderSummary() {
+    const el = document.getElementById("summary");
+    el.innerHTML = "";
+    const makeCard = (label, list, color, filterVal) => {
+      const done = list.filter(e => chk(e.id).done).length;
+      const c = document.createElement("div");
+      c.className = "sum-card" + ((catFilter === filterVal) ? " active" : "");
+      c.style.setProperty("--accent", color);
+      c.innerHTML = '<div class="label">' + esc(label) + '</div>'
+        + '<div class="count">' + list.length + '<small>건</small></div>'
+        + '<div class="mini">완료 ' + done + "/" + list.length + "</div>";
+      c.onclick = () => { catFilter = (catFilter === filterVal) ? null : filterVal; render(); };
+      el.appendChild(c);
+    };
+    makeCard("전체", events, "#1E293B", null);
+    CATEGORIES.forEach(cat => makeCard(cat, events.filter(e => e.category === cat), colorOf(cat), cat));
+  }
+
+  // ---------- 전체 진행률 ----------
+  function renderProgress() {
+    const total = events.length;
+    const done = events.filter(e => chk(e.id).done).length;
+    const wait = events.filter(e => !chk(e.id).done && chk(e.id).confirm).length;
+    document.getElementById("st-done").textContent = done;
+    document.getElementById("st-wait").textContent = wait;
+    document.getElementById("st-todo").textContent = total - done;
+    document.getElementById("st-over").textContent = events.filter(isOverdue).length;
+    document.getElementById("pbar-fill").style.width = (total ? Math.round(done / total * 100) : 0) + "%";
+  }
+
+  // ---------- 필터 매칭 ----------
+  function passPerson(ev) {
+    if (!personFilter) return true;
+    if (personFilter === COLLAB) return isCollab(ev);
+    if (personFilter === LEADER) return chk(ev.id).confirm && !chk(ev.id).done; // 컨펌요청 대기 중
+    return participates(ev, personFilter); // 담당이든 협업자든 개인 탭에 표시
+  }
+  function passCat(ev) { return !catFilter || ev.category === catFilter; }
+  function passEvent(ev) { return !eventFilter || eventsOf(ev).includes(eventFilter); }
+  function passSearch(ev) {
+    if (!searchText) return true;
+    const q = searchText.toLowerCase();
+    return [ev.title, ev.owner, ev.helper, ev.memo, ev.category, ev.event]
+      .some(v => String(v || "").toLowerCase().includes(q));
+  }
+
+  function mainHighlighted(ev) {
+    const family = [ev, ...subsOf(ev.id)];
+    return family.some(e => passPerson(e) && passCat(e) && passEvent(e) && passSearch(e));
+  }
+
+  // ---------- 달력 ----------
+  function renderCalendar() {
+    const { year, month } = view;
+    document.getElementById("page-month").textContent = year + "년 " + month + "월";
+    document.title = APP_TITLE + " — " + year + "년 " + month + "월";
+
+    const today = new Date();
+    const first = new Date(year, month - 1, 1);
+    const last = new Date(year, month, 0);
+    const gridStart = new Date(first); gridStart.setDate(first.getDate() - first.getDay());
+    const weeks = [];
+    for (let d = new Date(gridStart); d <= last || d.getDay() !== 0; d.setDate(d.getDate() + 1)) {
+      if (d.getDay() === 0) weeks.push([]);
+      weeks[weeks.length - 1].push(new Date(d));
+    }
+
+    const weeksEl = document.getElementById("weeks");
+    weeksEl.innerHTML = "";
+
+    // 묶음: 같은 묶음 값 업무는 달력에서 같은 레인(줄)을 쓰게 고정 → 여러 주에 걸쳐도 세로로 정렬됨
+    const groupLane = {};
+    let gi = 0;
+    mains().forEach(ev => {
+      const g = String(ev.group || "").trim();
+      if (g && !(g in groupLane)) groupLane[g] = gi++;
+    });
+
+    weeks.forEach(days => {
+      const wkStart = days[0], wkEnd = days[6];
+      // 일정 기간 중 이 주에 속하는 "작업일(주말·공휴일 제외)" 칸만 골라 연속 구간(runs)으로 묶음
+      const segs = [];
+      mains().forEach(ev => {
+        if (ev._start > wkEnd || ev._end < wkStart) return;
+        const cols = [];
+        for (let i = 0; i < 7; i++) {
+          if (days[i] >= ev._start && days[i] <= ev._end && isWorkday(days[i])) cols.push(i);
+        }
+        if (!cols.length) return; // 이 주에서는 작업일이 없음 (주말·공휴일만 걸침)
+        const runs = [];
+        let rs = cols[0], prev = cols[0];
+        for (let k = 1; k <= cols.length; k++) {
+          if (k < cols.length && cols[k] === prev + 1) { prev = cols[k]; continue; }
+          runs.push([rs, prev]);
+          if (k < cols.length) { rs = cols[k]; prev = cols[k]; }
+        }
+        segs.push({ ev, c0: cols[0], c1: cols[cols.length - 1], runs });
+      });
+      segs.sort((a, b) => a.c0 - b.c0 || (b.c1 - b.c0) - (a.c1 - a.c0));
+
+      // 레인 배치: 묶음 지정 업무는 고정 레인에, 나머지는 겹치지 않는 가장 낮은 레인에 채움
+      const laneIv = []; // laneIv[lane] = [[c0,c1], ...]
+      const fits = (lane, s) => !laneIv[lane] || laneIv[lane].every(([a, b]) => s.c1 < a || s.c0 > b);
+      const put = (lane, s) => { (laneIv[lane] = laneIv[lane] || []).push([s.c0, s.c1]); s.lane = lane; };
+      segs.forEach(s => {
+        const g = String(s.ev.group || "").trim();
+        if (g && g in groupLane) put(groupLane[g], s);
+      });
+      segs.forEach(s => {
+        const g = String(s.ev.group || "").trim();
+        if (g && g in groupLane) return; // 이미 배치됨
+        let lane = 0;
+        while (!fits(lane, s)) lane++;
+        put(lane, s);
+      });
+      const laneCount = laneIv.length;
+
+      const mob = window.innerWidth <= 560; // 모바일: 바 높이/간격 축소
+      const HEADER = mob ? 24 : 34, LANE = mob ? 20 : 28, PAD = mob ? 5 : 8;
+      const week = document.createElement("div");
+      week.className = "week";
+      week.style.height = Math.max(mob ? 60 : 96, HEADER + laneCount * LANE + PAD) + "px";
+
+      const cells = document.createElement("div");
+      cells.className = "cells";
+      days.forEach(d => {
+        const holiName = HOLIDAYS[ymd(d)];
+        const cell = document.createElement("div");
+        cell.className = "cell"
+          + (d.getMonth() !== month - 1 ? " other" : "")
+          + (d.getDay() === 0 ? " sun" : "") + (d.getDay() === 6 ? " sat" : "")
+          + (holiName ? " holiday" : "")
+          + (sameDay(d, today) ? " today" : "");
+        cell.innerHTML = '<span class="num">' + d.getDate() + "</span>"
+          + (holiName ? '<span class="holi-name">' + esc(holiName) + "</span>" : "");
+        cells.appendChild(cell);
+      });
+      week.appendChild(cells);
+
+      segs.forEach(s => {
+        const st = statusOf(s.ev);
+        const od = isOverdue(s.ev);
+        const isMile = s.ev.category === "중요일정";
+        const subs = subsOf(s.ev.id);
+        const subDone = subs.filter(x => chk(x.id).done).length;
+        // 제목·아이콘은 가장 긴 구간에만 표시, 나머지 구간은 색 바만
+        let longest = 0;
+        s.runs.forEach((r, i) => { if (r[1] - r[0] > s.runs[longest][1] - s.runs[longest][0]) longest = i; });
+        s.runs.forEach((run, i) => {
+          const bar = document.createElement("div");
+          bar.className = "bar" + (mainHighlighted(s.ev) ? "" : " dimmed") + (st === "완료" ? " done" : "") + (isMile ? " milestone" : "") + (od ? " overdue" : "");
+          bar.style.background = colorOf(s.ev.category);
+          bar.style.top = (HEADER + s.lane * LANE) + "px";
+          bar.style.left = "calc(" + (run[0] / 7 * 100) + "% + 3px)";
+          bar.style.width = "calc(" + ((run[1] - run[0] + 1) / 7 * 100) + "% - 6px)";
+          bar.innerHTML = i !== longest ? "" :
+            (od ? '<span class="ic">⚠</span>' : st === "완료" ? '<span class="ic">✔</span>' : st === "컨펌대기" ? '<span class="ic">📩</span>' : isMile ? '<span class="ic">★</span>' : "")
+            + '<span class="bt">' + esc(s.ev.title) + "</span>"
+            + (subs.length ? '<span class="sub-chip">' + subDone + "/" + subs.length + "</span>" : "");
+          bar.addEventListener("mouseenter", () => showTooltip(s.ev, bar));
+          bar.addEventListener("mouseleave", hideTooltip);
+          bar.addEventListener("click", () => { hideTooltip(); openDetail(s.ev.id); });
+          week.appendChild(bar);
+        });
+      });
+
+      weeksEl.appendChild(week);
+    });
+  }
+
+  // ---------- 담당자별 업무표 ----------
+  function renderPeople() {
+    const owners = [...new Set(events.flatMap(e => [...ownersOf(e), ...helpersOf(e)]))];
+    const tabsEl = document.getElementById("person-tabs");
+    tabsEl.innerHTML = "";
+
+    const makeTab = (label, filterVal, list, extraClass) => {
+      const done = list.filter(e => chk(e.id).done).length;
+      const b = document.createElement("button");
+      b.className = "tab" + (extraClass ? " " + extraClass : "") + ((personFilter === filterVal) ? " active" : "");
+      b.innerHTML = esc(label) + "<small>" + done + "/" + list.length + "</small>";
+      b.onclick = () => { personFilter = (personFilter === filterVal) ? null : filterVal; render(); };
+      tabsEl.appendChild(b);
+    };
+    makeTab("전체", null, events);
+    makeTab("👑 팀장 확인", LEADER, events.filter(e => chk(e.id).confirm && !chk(e.id).done), "leader");
+    makeTab("🤝 협업", COLLAB, events.filter(isCollab), "collab");
+    owners.forEach(o => makeTab(o, o, events.filter(e => participates(e, o))));
+
+    const body = document.getElementById("task-body");
+    body.innerHTML = "";
+
+    const pass = ev => passPerson(ev) && passCat(ev) && passEvent(ev) && passSearch(ev);
+    const rows = [];
+    const mainsSorted = mains().sort((a, b) => a._start - b._start || a.id - b.id);
+    mainsSorted.forEach(m => {
+      const mOk = pass(m);
+      const subOk = subsOf(m.id).filter(pass);
+      if (mOk) rows.push({ ev: m, sub: false });
+      subOk.forEach(s => rows.push({ ev: s, sub: true, orphan: !mOk ? m : null }));
+    });
+
+    if (!rows.length) {
+      body.innerHTML = '<tr><td colspan="6" class="empty-row">표시할 업무가 없습니다.</td></tr>';
+      return;
+    }
+
+    rows.forEach(({ ev, sub, orphan }) => {
+      const c = chk(ev.id);
+      const st = statusOf(ev);
+      const od = isOverdue(ev);
+      const tr = document.createElement("tr");
+      tr.className = (st === "완료" ? "row-done " : "") + (sub ? "row-sub " : "") + (od ? "row-overdue" : "");
+      const titleHtml = sub
+        ? '<div class="t-title"><span class="sub-arrow">└</span><span class="t-dot" style="background:' + colorOf(ev.category) + '"></span>' + esc(ev.title)
+          + (orphan ? ' <span class="t-parent-ref">(상위: ' + esc(orphan.title) + ")</span>" : "") + "</div>"
+        : '<div class="t-title"><span class="t-dot" style="background:' + colorOf(ev.category) + '"></span>' + esc(ev.title)
+          + (subsOf(ev.id).length ? ' <span class="t-parent-ref">세부 ' + subsOf(ev.id).filter(x => chk(x.id).done).length + "/" + subsOf(ev.id).length + "</span>" : "") + "</div>";
+      tr.innerHTML =
+        '<td class="c cell-done" data-label="완료"><input type="checkbox" class="chk" ' + (c.done ? "checked" : "") + "></td>" +
+        '<td class="c cell-confirm" data-label="컨펌요청"><input type="checkbox" class="chk confirm" ' + (c.confirm ? "checked" : "") + "></td>" +
+        '<td class="cell-title">' + titleHtml + (ev.memo ? '<div class="t-memo"' + (sub ? ' style="padding-left:20px"' : "") + ">" + esc(ev.memo) + "</div>" : "") + "</td>" +
+        '<td class="t-date cell-date" data-label="기간">' + periodOf(ev) + "</td>" +
+        '<td class="t-owner cell-owner" data-label="담당">' + ownerLabel(ev) + "</td>" +
+        '<td class="c cell-status" data-label="상태">' + (od ? '<span class="st-badge st-지연">지연</span> ' : "") + '<span class="st-badge st-' + st + '">' + st + "</span></td>";
+      const [doneBox, confirmBox] = tr.querySelectorAll("input");
+      doneBox.onchange = () => setCheck(ev.id, "done", doneBox.checked);
+      confirmBox.onchange = () => setCheck(ev.id, "confirm", confirmBox.checked);
+      body.appendChild(tr);
+    });
+  }
+
+  function setCheck(id, key, val) {
+    checks[id] = { ...chk(id), [key]: val };
+    render();
+    if (detailId != null) fillDetail(detailId);
+    if (CLOUD) pushCheck(id, key, val);
+    else saveChecks();
+  }
+
+  // ---------- 툴팁 ----------
+  const tt = document.getElementById("tooltip");
+  function showTooltip(ev, anchor) {
+    const st = statusOf(ev);
+    const isMile = ev.category === "중요일정";
+    const subs = subsOf(ev.id);
+    tt.innerHTML =
+      '<span class="tt-cat" style="background:' + colorOf(ev.category) + (isMile ? ";color:#1E293B" : "") + '">' + esc(ev.category) + "</span>" +
+      '<div class="tt-title">' + esc(ev.title) + "</div>" +
+      '<div class="tt-row"><span class="k">기간</span><span>' + periodOf(ev) + "</span></div>" +
+      '<div class="tt-row"><span class="k">담당</span><span>' + ownerLabel(ev) + "</span></div>" +
+      '<div class="tt-row"><span class="k">상태</span><span><span class="st-badge st-' + st + '">' + st + "</span>" + (isOverdue(ev) ? ' <span class="st-badge st-지연">지연</span>' : "") + "</span></div>" +
+      (ev.memo ? '<div class="tt-memo">' + esc(ev.memo) + "</div>" : "") +
+      (subs.length
+        ? '<div class="tt-click">▸ 세부업무 ' + subs.length + "건 — 클릭하면 열립니다</div>"
+        : '<div class="tt-click">▸ 클릭하면 상세가 열립니다</div>');
+    tt.style.display = "block";
+    const r = anchor.getBoundingClientRect();
+    let x = r.left, y = r.bottom + 8;
+    if (x + tt.offsetWidth > window.innerWidth - 12) x = window.innerWidth - tt.offsetWidth - 12;
+    if (y + tt.offsetHeight > window.innerHeight - 12) y = r.top - tt.offsetHeight - 8;
+    tt.style.left = x + "px";
+    tt.style.top = y + "px";
+  }
+  function hideTooltip() { tt.style.display = "none"; }
+
+  // ---------- 상세 패널 ----------
+  const detailEl = document.getElementById("detail");
+  const backdropEl = document.getElementById("detail-backdrop");
+
+  function openDetail(id) {
+    detailId = id;
+    fillDetail(id);
+    detailEl.style.display = "block";
+    backdropEl.style.display = "block";
+  }
+  function closeDetail() {
+    detailId = null;
+    detailEl.style.display = "none";
+    backdropEl.style.display = "none";
+  }
+  backdropEl.onclick = closeDetail;
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeDetail(); });
+
+  function fillDetail(id) {
+    const ev = byId(id);
+    if (!ev) { closeDetail(); return; }
+    const st = statusOf(ev);
+    const isMile = ev.category === "중요일정";
+    const subs = subsOf(id);
+    const c = chk(id);
+
+    let html =
+      '<div class="d-head">' +
+        '<span class="d-cat" style="background:' + colorOf(ev.category) + (isMile ? ";color:#1E293B" : "") + '">' + esc(ev.category) + "</span>" +
+        '<span class="st-badge st-' + st + '" style="margin-top:2px">' + st + "</span>" +
+        (isOverdue(ev) ? '<span class="st-badge st-지연" style="margin-top:2px">지연</span>' : "") +
+        '<button class="d-close" id="d-close-btn">✕</button>' +
+      "</div>" +
+      '<div class="d-title">' + esc(ev.title) + "</div>" +
+      '<div class="d-row"><span class="k">기간</span><span>' + periodOf(ev) + "</span></div>" +
+      '<div class="d-row"><span class="k">담당</span><span>' + ownerLabel(ev) + "</span></div>" +
+      (ev.memo ? '<div class="d-memo">' + esc(ev.memo) + "</div>" : "") +
+      '<div class="d-check">' +
+        '<label><input type="checkbox" class="chk" id="d-done" ' + (c.done ? "checked" : "") + "> 완료</label>" +
+        '<label><input type="checkbox" class="chk confirm" id="d-confirm" ' + (c.confirm ? "checked" : "") + "> 컨펌요청</label>" +
+      "</div>";
+
+    html += '<div class="d-subs-title">세부업무 <small>' +
+      (subs.length ? subs.filter(x => chk(x.id).done).length + "/" + subs.length + " 완료" : "") + "</small></div>";
+    if (subs.length) {
+      subs.forEach(s => {
+        const sc = chk(s.id);
+        html += '<div class="d-sub' + (sc.done ? " sdone" : "") + '">' +
+          '<input type="checkbox" class="chk d-sub-chk" data-id="' + s.id + '" ' + (sc.done ? "checked" : "") + ">" +
+          '<span class="s-t">' + esc(s.title) + "</span>" +
+          '<span class="s-meta">' + periodOf(s) + " · " + esc(ownersOf(s).join(", ") || "-") + "</span>" +
+        "</div>";
+      });
+    } else {
+      html += '<div class="d-none">등록된 세부업무가 없습니다. ' +
+        (CLOUD ? "구글 시트에서 상위번호에 " + ev.id + "를 적은 행을 추가하면" : "엑셀에서 상위번호에 " + ev.id + "를 적은 행을 추가하면") +
+        " 여기에 표시됩니다.</div>";
+    }
+
+    detailEl.innerHTML = html;
+    document.getElementById("d-close-btn").onclick = closeDetail;
+    document.getElementById("d-done").onchange = e => setCheck(id, "done", e.target.checked);
+    document.getElementById("d-confirm").onchange = e => setCheck(id, "confirm", e.target.checked);
+    detailEl.querySelectorAll(".d-sub-chk").forEach(box => {
+      box.onchange = () => setCheck(Number(box.dataset.id), "done", box.checked);
+    });
+  }
+
+  // ---------- 🏷 행사 색인 토글 ----------
+  function renderEventToggles() {
+    const el = document.getElementById("event-toggles");
+    const tags = [...new Set(events.flatMap(eventsOf))];
+    if (!tags.length) { el.style.display = "none"; el.innerHTML = ""; return; }
+    el.style.display = "";
+    el.innerHTML = '<span class="et-label">🏷 행사</span>'
+      + '<button class="et-btn' + (eventFilter === null ? " active" : "") + '" data-ev="">전체</button>'
+      + tags.map(t => '<button class="et-btn' + (eventFilter === t ? " active" : "") + '" data-ev="'
+          + encodeURIComponent(t) + '">' + esc(t) + "</button>").join("");
+    el.querySelectorAll(".et-btn").forEach(b => {
+      b.onclick = () => {
+        const v = b.dataset.ev ? decodeURIComponent(b.dataset.ev) : null;
+        eventFilter = (eventFilter === v) ? null : v;
+        render();
+      };
+    });
+  }
+
+  // ---------- 검색 · 필터 초기화 바 ----------
+  const personLabel = v => v === COLLAB ? "🤝 협업" : v === LEADER ? "👑 팀장 확인" : v;
+  function renderFilterBar() {
+    const chips = [];
+    if (catFilter)    chips.push({ k: "분류", v: catFilter,             clear: () => { catFilter = null; } });
+    if (eventFilter)  chips.push({ k: "행사", v: eventFilter,           clear: () => { eventFilter = null; } });
+    if (personFilter) chips.push({ k: "담당", v: personLabel(personFilter), clear: () => { personFilter = null; } });
+    if (searchText)   chips.push({ k: "검색", v: searchText,            clear: () => { searchText = ""; document.getElementById("search-input").value = ""; } });
+
+    const box = document.getElementById("active-filters");
+    box.innerHTML = chips.map((c, i) =>
+      '<span class="filter-chip">' + esc(c.k) + ': ' + esc(c.v) + '<span class="x" data-i="' + i + '">✕</span></span>').join("");
+    box.querySelectorAll(".x").forEach(x => {
+      x.onclick = () => { chips[Number(x.dataset.i)].clear(); render(); };
+    });
+    document.getElementById("btn-filter-reset").style.display = chips.length ? "" : "none";
+    document.getElementById("search-clear").style.display = searchText ? "" : "none";
+  }
+
+  const searchInput = document.getElementById("search-input");
+  searchInput.addEventListener("input", () => { searchText = searchInput.value.trim(); render(); });
+  document.getElementById("search-clear").onclick = () => { searchText = ""; searchInput.value = ""; render(); };
+  document.getElementById("btn-filter-reset").onclick = () => {
+    catFilter = null; personFilter = null; eventFilter = null; searchText = ""; searchInput.value = "";
+    render();
+  };
+
+  // ---------- 초기화 ----------
+  // 범례: 분류 색상 + 상태 아이콘 설명
+  const catLegend = CATEGORIES.map(cat =>
+    '<span><i style="background:' + colorOf(cat) + '"></i>' + cat + "</span>").join("");
+  const statusLegend = [["✔", "완료", ""], ["📩", "컨펌 요청", ""], ["★", "중요일정", ""], ["⚠", "지연(기한 초과)", "od"]]
+    .map(([ic, t, cls]) => '<span><i class="lg-ic ' + cls + '">' + ic + "</i>" + t + "</span>").join("");
+  document.getElementById("legend").innerHTML = catLegend + '<i class="legend-sep"></i>' + statusLegend;
+  document.getElementById("page-title").textContent = APP_TITLE;
+
+  function render() {
+    renderSummary();
+    renderEventToggles();
+    renderProgress();
+    renderFilterBar();
+    renderCalendar();
+    renderPeople();
+  }
+
+  if (CLOUD) {
+    // 구글 시트 연동 모드: 엑셀 업로드/복원 대신 시트 열기 + 동기화 버튼
+    document.getElementById("btn-upload").style.display = "none";
+    document.getElementById("btn-reset").style.display = "none";
+    const syncBtn = document.getElementById("btn-sync");
+    syncBtn.style.display = "";
+    syncBtn.onclick = () => {
+      setSrcLine("⏳ 동기화 중…");
+      loadCloud(true, true).catch(err =>
+        setSrcLine('<span class="err">⚠ 구글 시트 연결 실패(' + esc(err.message) + ") — config.js의 scriptUrl과 배포 설정을 확인하세요.</span>"));
+    };
+    if (CFG.sheetUrl) {
+      const b = document.getElementById("btn-sheet");
+      b.style.display = "";
+      b.onclick = () => window.open(CFG.sheetUrl, "_blank");
+    }
+    setSrcLine("⏳ 구글 시트에서 불러오는 중…");
+    loadCloud(true, true).catch(err => {
+      // 연결 실패 시 기본 데이터로라도 표시
+      loadState();
+      render();
+      setSrcLine('<span class="err">⚠ 구글 시트 연결 실패(' + esc(err.message) + ") — 기본 데이터로 표시 중입니다. config.js 설정을 확인하세요.</span>");
+    });
+    setInterval(() => { loadCloud(false, false).catch(() => {}); }, Math.max(10, CFG.pollSeconds || 30) * 1000);
+  } else {
+    loadState();
+    setSrcLine("데이터: " + sourceInfo);
+    render();
+  }
+})();
+</script>
+</body>
+</html>
