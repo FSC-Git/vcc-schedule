@@ -141,6 +141,8 @@
   .tab.active { background: #1E293B; color: #fff; border-color: #1E293B; }
   .tab.collab { border-color: #C4B5FD; color: #6D28D9; }
   .tab.collab.active { background: #6D28D9; color: #fff; border-color: #6D28D9; }
+  .tab.leader { border-color: #FCD34D; color: #B45309; }
+  .tab.leader.active { background: #B45309; color: #fff; border-color: #B45309; }
   .tab small { font-weight: 600; opacity: .75; margin-left: 4px; }
 
   .task-table-wrap { background: var(--card); border: 1.5px solid var(--border); border-radius: 14px; overflow: auto; }
@@ -173,6 +175,63 @@
   .st-컨펌대기 { background: #FEF3C7; color: #B45309; }
   .st-진행전   { background: #F1F5F9; color: #64748B; }
   .empty-row { text-align: center; color: var(--text-sub); padding: 22px !important; font-size: 13px; }
+
+  /* ---------- 범례: 상태 아이콘 ---------- */
+  .legend i.lg-ic {
+    width: auto; height: auto; border-radius: 0; background: none;
+    font-style: normal; font-size: 12.5px; line-height: 1;
+  }
+  .legend i.lg-ic.od { color: #DC2626; }
+  .legend .legend-sep { width: 1px; height: 16px; border-radius: 0; background: var(--border); align-self: center; }
+
+  /* ---------- 🏷 행사 색인 토글 ---------- */
+  .event-toggles { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .event-toggles .et-label { font-size: 13px; font-weight: 800; color: var(--text-sub); margin-right: 2px; }
+  .et-btn {
+    border: 1.5px solid var(--border); background: var(--card);
+    font-family: inherit; font-size: 12.5px; font-weight: 700; color: var(--text-sub);
+    padding: 6px 13px; border-radius: 999px; cursor: pointer;
+    transition: background .12s, color .12s, border-color .12s;
+  }
+  .et-btn:hover { border-color: #7DD3FC; }
+  .et-btn.active { background: #0EA5E9; color: #fff; border-color: #0EA5E9; }
+
+  /* ---------- 검색 · 필터 바 ---------- */
+  .filter-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+  .search-box {
+    display: flex; align-items: center; gap: 7px;
+    background: var(--card); border: 1.5px solid var(--border); border-radius: 10px;
+    padding: 7px 11px; flex: 0 1 320px; min-width: 220px;
+  }
+  .search-box:focus-within { border-color: #94A3B8; }
+  .search-box .search-ic { font-size: 13px; color: var(--text-sub); flex: 0 0 auto; }
+  .search-box input {
+    border: none; outline: none; background: transparent; flex: 1; min-width: 0;
+    font-family: inherit; font-size: 13px; color: var(--text);
+  }
+  .search-box .search-clear {
+    border: none; background: #F1F5F9; color: var(--text-sub);
+    width: 20px; height: 20px; border-radius: 50%; cursor: pointer;
+    font-size: 11px; font-weight: 700; flex: 0 0 auto; line-height: 1;
+  }
+  .search-box .search-clear:hover { background: #E2E8F0; color: var(--text); }
+  .active-filters { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .filter-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: #EEF2FF; color: #3730A3; border: 1px solid #C7D2FE;
+    border-radius: 999px; padding: 4px 6px 4px 11px; font-size: 12px; font-weight: 700;
+  }
+  .filter-chip .x { cursor: pointer; opacity: .6; font-weight: 800; padding: 0 3px; }
+  .filter-chip .x:hover { opacity: 1; }
+  .btn.filter-reset { padding: 7px 12px; font-size: 12.5px; color: #DC2626; border-color: #FCA5A5; }
+  .btn.filter-reset:hover { background: #FEF2F2; border-color: #F87171; }
+
+  /* ---------- 지연(기한 초과) 표시 ---------- */
+  .bar.overdue { box-shadow: 0 0 0 2px #DC2626 inset, 0 1px 2px rgba(15,23,42,.15); }
+  .st-지연 { background: #FEE2E2; color: #DC2626; }
+  .tasks tr.row-overdue td { background: #FEF6F6; }
+  .tasks tr.row-overdue:hover td { background: #FEECEC; }
+  .pstat .over b { color: #DC2626; }
 
   /* ---------- 툴팁 ---------- */
   #tooltip {
@@ -261,6 +320,12 @@
     .legend { gap: 10px; margin: 10px 0 16px; }
     .legend span { font-size: 10.5px; }
     .legend i { width: 10px; height: 10px; }
+    .filter-bar { gap: 8px; margin-bottom: 12px; }
+    .search-box { flex: 1 1 100%; min-width: 0; }
+    .filter-chip { font-size: 11px; }
+    .event-toggles { gap: 6px; margin-bottom: 12px; }
+    .event-toggles .et-label { font-size: 12px; width: 100%; }
+    .et-btn { padding: 5px 11px; font-size: 11.5px; }
     .people h2 { font-size: 15px; }
     .people h2 .hint { display: block; margin-top: 4px; font-size: 11px; word-break: keep-all; }
     .tab { padding: 6px 10px; font-size: 11.5px; }
@@ -273,6 +338,46 @@
     #detail .d-title { font-size: 16px; }
     #detail .d-row { font-size: 12.5px; }
     #tooltip { width: min(260px, 88vw); }
+  }
+
+  /* ---------- 모바일: 업무표를 카드형으로 (가로 스크롤 제거) ---------- */
+  @media (max-width: 560px) {
+    .task-table-wrap { overflow: visible; border: none; background: transparent; border-radius: 0; }
+    table.tasks { display: block; width: 100%; min-width: 0; }
+    .tasks thead { display: none; }
+    .tasks tbody { display: block; }
+    .tasks tr {
+      display: flex; flex-direction: column; gap: 2px;
+      background: var(--card); border: 1.5px solid var(--border);
+      border-radius: 12px; padding: 12px 14px; margin-bottom: 10px;
+    }
+    .tasks tr:hover td { background: transparent; }
+    .tasks tr.row-sub { margin-left: 16px; background: #FAFBFC; }
+    .tasks tr.row-overdue { border-color: #FCA5A5; }
+    .tasks tr.row-overdue td, .tasks tr.row-sub td { background: transparent; }
+    .tasks td {
+      display: flex; align-items: center; gap: 8px;
+      border: none; padding: 3px 0; font-size: 13px; white-space: normal;
+    }
+    .tasks td.c { text-align: left; justify-content: flex-start; }
+    .tasks td::before {
+      content: attr(data-label); flex: 0 0 58px;
+      font-size: 11px; font-weight: 700; color: var(--text-sub);
+    }
+    /* 카드 안 순서 재배치: 제목 → 기간 → 담당 → 상태 → 완료 → 컨펌 */
+    .tasks td.cell-title   { order: 1; flex-direction: column; align-items: flex-start; gap: 3px; margin-bottom: 4px; }
+    .tasks td.cell-date    { order: 2; }
+    .tasks td.cell-owner   { order: 3; }
+    .tasks td.cell-status  { order: 4; }
+    .tasks td.cell-done    { order: 5; }
+    .tasks td.cell-confirm { order: 6; }
+    .tasks td.cell-title::before { display: none; }
+    .tasks td.cell-title .t-title { flex-wrap: wrap; word-break: keep-all; font-size: 14px; }
+    .tasks td.cell-title .t-memo { padding-left: 0 !important; }
+    .row-sub .t-title { padding-left: 0; }
+    .tasks .chk { width: 20px; height: 20px; }
+    .tasks td.empty-row { justify-content: center; text-align: center; padding: 18px 0; }
+    .tasks td.empty-row::before { display: none; }
   }
 </style>
 </head>
@@ -297,6 +402,8 @@
 
   <section class="summary" id="summary"></section>
 
+  <section class="event-toggles" id="event-toggles" style="display:none"></section>
+
   <section class="progress-strip">
     <span class="pt">전체 진행률</span>
     <div class="pbar"><i id="pbar-fill" style="width:0%"></i></div>
@@ -304,7 +411,18 @@
       <span class="done">완료 <b id="st-done">0</b></span>
       <span class="wait">컨펌대기 <b id="st-wait">0</b></span>
       <span>미완료 <b id="st-todo">0</b></span>
+      <span class="over">지연 <b id="st-over">0</b></span>
     </div>
+  </section>
+
+  <section class="filter-bar">
+    <div class="search-box">
+      <span class="search-ic">🔍</span>
+      <input type="text" id="search-input" placeholder="업무·담당·메모 검색" autocomplete="off">
+      <button class="search-clear" id="search-clear" style="display:none" title="검색어 지우기">✕</button>
+    </div>
+    <div class="active-filters" id="active-filters"></div>
+    <button class="btn filter-reset" id="btn-filter-reset" style="display:none">↺ 필터 초기화</button>
   </section>
 
   <section class="calendar">
@@ -317,7 +435,7 @@
   <div class="legend" id="legend"></div>
 
   <section class="people">
-    <h2>👤 담당자별 업무 현황 <span class="hint">— 담당은 2인 이상 가능, 협업자가 붙은 업무는 🤝 협업 탭에도 모입니다 · 달력의 일정을 클릭하면 세부업무가 열립니다</span></h2>
+    <h2>👤 담당자별 업무 현황 <span class="hint">— 컨펌요청된 업무는 👑 팀장 확인 탭에, 협업자가 붙은 업무는 🤝 협업 탭에 모입니다 · 달력의 일정을 클릭하면 세부업무가 열립니다</span></h2>
     <div class="tabs" id="person-tabs"></div>
     <div class="task-table-wrap">
       <table class="tasks">
@@ -349,20 +467,21 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
 </script>
 <script>
 (function () {
-  const CATEGORIES = ["교육", "영상", "디자인", "홈페이지", "마케팅", "마일스톤"];
-  const CAT_ALIAS = { "강사섭외": "교육", "강사 섭외": "교육" };
+  const CATEGORIES = ["교육", "영상", "디자인", "홈페이지", "마케팅", "중요일정"];
+  const CAT_ALIAS = { "강사섭외": "교육", "강사 섭외": "교육", "마일스톤": "중요일정" };
   const COLORS = {
     "교육":     "#EC4899",
     "영상":     "#2196F3",
     "디자인":   "#0F766E",
     "홈페이지": "#C2410C",
     "마케팅":   "#6B7280",
-    "마일스톤": "#F5A623"
+    "중요일정": "#F5A623"
   };
   const colorOf = c => COLORS[c] || "#94A3B8";
   const LS_EVENTS = "vccSchedule.events";
   const LS_CHECKS = "vccSchedule.checks";
   const COLLAB = "__collab__";
+  const LEADER = "__leader__";   // 👑 팀장 확인 탭: 컨펌요청 대기 업무 모아보기
 
   // ---------- 동작 모드 ----------
   const CFG = (typeof CONFIG !== "undefined" && CONFIG) ? CONFIG : {};
@@ -374,12 +493,39 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
   let checks = {};            // { id: { done: bool, confirm: bool } }
   let catFilter = null;
   let personFilter = null;    // 담당자명 | COLLAB | null
+  let searchText = "";        // 업무·담당·메모 검색어
+  let eventFilter = null;     // 🏷 행사 태그 필터 (null = 전체)
   let view = null;            // { year, month }
   let detailId = null;
   let sourceInfo = "기본 데이터 (schedule-data.js)";
   let lastPayload = "";       // 클라우드 응답 캐시 (변경 없으면 재렌더 생략)
 
+  // 2026년 대한민국 법정공휴일 (대체공휴일 포함) — 앱에 내장, 어느 달로 넘겨도 자동 표시
+  const KR_HOLIDAYS_2026 = [
+    { date: "2026-01-01", name: "신정" },
+    { date: "2026-02-16", name: "설날" },
+    { date: "2026-02-17", name: "설날" },
+    { date: "2026-02-18", name: "설날" },
+    { date: "2026-03-01", name: "삼일절" },
+    { date: "2026-03-02", name: "대체공휴일" },      // 삼일절(일) 대체
+    { date: "2026-05-05", name: "어린이날" },
+    { date: "2026-05-24", name: "부처님오신날" },
+    { date: "2026-05-25", name: "대체공휴일" },      // 부처님오신날(일) 대체
+    { date: "2026-06-06", name: "현충일" },
+    { date: "2026-08-15", name: "광복절" },
+    { date: "2026-08-17", name: "대체공휴일" },      // 광복절(토) 대체
+    { date: "2026-09-24", name: "추석" },
+    { date: "2026-09-25", name: "추석" },
+    { date: "2026-09-26", name: "추석" },
+    { date: "2026-09-28", name: "대체공휴일" },      // 추석 연휴 대체
+    { date: "2026-10-03", name: "개천절" },
+    { date: "2026-10-05", name: "대체공휴일" },      // 개천절(토) 대체
+    { date: "2026-10-09", name: "한글날" },
+    { date: "2026-12-25", name: "성탄절" }
+  ];
   const HOLIDAYS = {};
+  KR_HOLIDAYS_2026.forEach(h => { HOLIDAYS[h.date] = h.name; });
+  // 데이터(config.js·schedule-data.js)에 적어둔 공휴일은 위에 더해지고, 같은 날짜면 덮어씀 (예: 7/17 제헌절)
   ((CFG.holidays || SCHEDULE_DATA.holidays) || []).forEach(h => { HOLIDAYS[h.date] = h.name; });
 
   // ---------- 유틸 ----------
@@ -397,6 +543,8 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
   // 협업자: 별도 필드 — 다른 파트에서 지원하는 사람. 협업자가 있는 업무만 🤝 협업 탭에 표시
   const ownersOf = ev => String(ev.owner || "").split(/[,·/]+/).map(s => s.trim()).filter(Boolean);
   const helpersOf = ev => String(ev.helper || "").split(/[,·/]+/).map(s => s.trim()).filter(Boolean);
+  // 행사: 한 업무가 여러 행사에 걸칠 수 있어 쉼표로 나열 가능 (색인 토글의 원천)
+  const eventsOf = ev => String(ev.event || "").split(/[,·/]+/).map(s => s.trim()).filter(Boolean);
   const isCollab = ev => helpersOf(ev).length > 0;
   const participates = (ev, name) => ownersOf(ev).includes(name) || helpersOf(ev).includes(name);
   const ownerLabel = ev => {
@@ -409,6 +557,11 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
   const mains = () => events.filter(e => !e.parent);
   const subsOf = id => events.filter(e => e.parent === id).sort((a, b) => a._start - b._start || a.id - b.id);
   const byId = id => events.find(e => e.id === id);
+  // 주말·공휴일은 작업일이 아님 → 달력 바가 이 날들을 건너뛰고 그려짐
+  const isWorkday = d => d.getDay() !== 0 && d.getDay() !== 6 && !HOLIDAYS[ymd(d)];
+  // 지연: 종료일이 오늘 이전인데 아직 완료가 아닌 업무
+  const startOfToday = () => { const t = new Date(); return new Date(t.getFullYear(), t.getMonth(), t.getDate()); };
+  const isOverdue = ev => !chk(ev.id).done && ev._end < startOfToday();
 
   function normalizeEvents(raw) {
     const list = raw.map(ev => ({
@@ -421,12 +574,18 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
     const ids = new Set(list.map(e => e.id));
     list.forEach(ev => {
       if (ev.parent && !ids.has(ev.parent)) ev.parent = undefined;
-      if (ev.parent && (!ev.category || ev.category === "미지정")) {
+      if (ev.parent) {
         const p = list.find(e => e.id === ev.parent);
-        if (p) ev.category = p.category;
+        if (p) {
+          if (!ev.category || ev.category === "미지정") ev.category = p.category;
+          if (!ev.event) ev.event = p.event;   // 세부업무는 상위의 행사·묶음을 상속
+          if (!ev.group) ev.group = p.group;
+        }
       }
     });
-    return list;
+    // 숨김 처리: 숨김 컬럼에 값이 있는 업무(+그 세부업무)는 화면 전체에서 제외 (데이터·체크 기록은 유지)
+    const hiddenIds = new Set(list.filter(e => String(e.hidden || "").trim() !== "").map(e => e.id));
+    return list.filter(e => !hiddenIds.has(e.id) && !(e.parent && hiddenIds.has(e.parent)));
   }
 
   // ---------- 로컬 모드: 저장 / 불러오기 ----------
@@ -563,6 +722,9 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
           start, end: end || undefined,
           owner: r[col["담당"]] == null ? "" : String(r[col["담당"]]).trim(),
           helper: col["협업자"] != null && r[col["협업자"]] != null ? String(r[col["협업자"]]).trim() : "",
+          event: col["행사"] != null && r[col["행사"]] != null ? String(r[col["행사"]]).trim() : "",
+          group: col["묶음"] != null && r[col["묶음"]] != null ? String(r[col["묶음"]]).trim() : "",
+          hidden: col["숨김"] != null && r[col["숨김"]] != null ? String(r[col["숨김"]]).trim() : "",
           memo: r[col["메모"]] == null ? "" : String(r[col["메모"]]).trim()
         });
       });
@@ -637,6 +799,7 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
     document.getElementById("st-done").textContent = done;
     document.getElementById("st-wait").textContent = wait;
     document.getElementById("st-todo").textContent = total - done;
+    document.getElementById("st-over").textContent = events.filter(isOverdue).length;
     document.getElementById("pbar-fill").style.width = (total ? Math.round(done / total * 100) : 0) + "%";
   }
 
@@ -644,13 +807,21 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
   function passPerson(ev) {
     if (!personFilter) return true;
     if (personFilter === COLLAB) return isCollab(ev);
+    if (personFilter === LEADER) return chk(ev.id).confirm && !chk(ev.id).done; // 컨펌요청 대기 중
     return participates(ev, personFilter); // 담당이든 협업자든 개인 탭에 표시
   }
   function passCat(ev) { return !catFilter || ev.category === catFilter; }
+  function passEvent(ev) { return !eventFilter || eventsOf(ev).includes(eventFilter); }
+  function passSearch(ev) {
+    if (!searchText) return true;
+    const q = searchText.toLowerCase();
+    return [ev.title, ev.owner, ev.helper, ev.memo, ev.category, ev.event]
+      .some(v => String(v || "").toLowerCase().includes(q));
+  }
 
   function mainHighlighted(ev) {
     const family = [ev, ...subsOf(ev.id)];
-    return family.some(e => passPerson(e) && passCat(e));
+    return family.some(e => passPerson(e) && passCat(e) && passEvent(e) && passSearch(e));
   }
 
   // ---------- 달력 ----------
@@ -672,29 +843,58 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
     const weeksEl = document.getElementById("weeks");
     weeksEl.innerHTML = "";
 
+    // 묶음: 같은 묶음 값 업무는 달력에서 같은 레인(줄)을 쓰게 고정 → 여러 주에 걸쳐도 세로로 정렬됨
+    const groupLane = {};
+    let gi = 0;
+    mains().forEach(ev => {
+      const g = String(ev.group || "").trim();
+      if (g && !(g in groupLane)) groupLane[g] = gi++;
+    });
+
     weeks.forEach(days => {
       const wkStart = days[0], wkEnd = days[6];
-      const segs = mains()
-        .filter(ev => ev._start <= wkEnd && ev._end >= wkStart)
-        .map(ev => ({
-          ev,
-          c0: Math.max(0, Math.round((ev._start - wkStart) / 864e5)),
-          c1: Math.min(6, Math.round((ev._end - wkStart) / 864e5))
-        }))
-        .sort((a, b) => a.c0 - b.c0 || (b.c1 - b.c0) - (a.c1 - a.c0));
-
-      const lanes = [];
-      segs.forEach(s => {
-        let li = lanes.findIndex(endCol => endCol < s.c0);
-        if (li === -1) { li = lanes.length; lanes.push(s.c1); } else { lanes[li] = s.c1; }
-        s.lane = li;
+      // 일정 기간 중 이 주에 속하는 "작업일(주말·공휴일 제외)" 칸만 골라 연속 구간(runs)으로 묶음
+      const segs = [];
+      mains().forEach(ev => {
+        if (ev._start > wkEnd || ev._end < wkStart) return;
+        const cols = [];
+        for (let i = 0; i < 7; i++) {
+          if (days[i] >= ev._start && days[i] <= ev._end && isWorkday(days[i])) cols.push(i);
+        }
+        if (!cols.length) return; // 이 주에서는 작업일이 없음 (주말·공휴일만 걸침)
+        const runs = [];
+        let rs = cols[0], prev = cols[0];
+        for (let k = 1; k <= cols.length; k++) {
+          if (k < cols.length && cols[k] === prev + 1) { prev = cols[k]; continue; }
+          runs.push([rs, prev]);
+          if (k < cols.length) { rs = cols[k]; prev = cols[k]; }
+        }
+        segs.push({ ev, c0: cols[0], c1: cols[cols.length - 1], runs });
       });
+      segs.sort((a, b) => a.c0 - b.c0 || (b.c1 - b.c0) - (a.c1 - a.c0));
+
+      // 레인 배치: 묶음 지정 업무는 고정 레인에, 나머지는 겹치지 않는 가장 낮은 레인에 채움
+      const laneIv = []; // laneIv[lane] = [[c0,c1], ...]
+      const fits = (lane, s) => !laneIv[lane] || laneIv[lane].every(([a, b]) => s.c1 < a || s.c0 > b);
+      const put = (lane, s) => { (laneIv[lane] = laneIv[lane] || []).push([s.c0, s.c1]); s.lane = lane; };
+      segs.forEach(s => {
+        const g = String(s.ev.group || "").trim();
+        if (g && g in groupLane) put(groupLane[g], s);
+      });
+      segs.forEach(s => {
+        const g = String(s.ev.group || "").trim();
+        if (g && g in groupLane) return; // 이미 배치됨
+        let lane = 0;
+        while (!fits(lane, s)) lane++;
+        put(lane, s);
+      });
+      const laneCount = laneIv.length;
 
       const mob = window.innerWidth <= 560; // 모바일: 바 높이/간격 축소
       const HEADER = mob ? 24 : 34, LANE = mob ? 20 : 28, PAD = mob ? 5 : 8;
       const week = document.createElement("div");
       week.className = "week";
-      week.style.height = Math.max(mob ? 60 : 96, HEADER + lanes.length * LANE + PAD) + "px";
+      week.style.height = Math.max(mob ? 60 : 96, HEADER + laneCount * LANE + PAD) + "px";
 
       const cells = document.createElement("div");
       cells.className = "cells";
@@ -714,22 +914,29 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
 
       segs.forEach(s => {
         const st = statusOf(s.ev);
-        const isMile = s.ev.category === "마일스톤";
+        const od = isOverdue(s.ev);
+        const isMile = s.ev.category === "중요일정";
         const subs = subsOf(s.ev.id);
         const subDone = subs.filter(x => chk(x.id).done).length;
-        const bar = document.createElement("div");
-        bar.className = "bar" + (mainHighlighted(s.ev) ? "" : " dimmed") + (st === "완료" ? " done" : "") + (isMile ? " milestone" : "");
-        bar.style.background = colorOf(s.ev.category);
-        bar.style.top = (HEADER + s.lane * LANE) + "px";
-        bar.style.left = "calc(" + (s.c0 / 7 * 100) + "% + 3px)";
-        bar.style.width = "calc(" + ((s.c1 - s.c0 + 1) / 7 * 100) + "% - 6px)";
-        bar.innerHTML = (st === "완료" ? '<span class="ic">✔</span>' : st === "컨펌대기" ? '<span class="ic">📩</span>' : isMile ? '<span class="ic">★</span>' : "")
-          + '<span class="bt">' + esc(s.ev.title) + "</span>"
-          + (subs.length ? '<span class="sub-chip">' + subDone + "/" + subs.length + "</span>" : "");
-        bar.addEventListener("mouseenter", () => showTooltip(s.ev, bar));
-        bar.addEventListener("mouseleave", hideTooltip);
-        bar.addEventListener("click", () => { hideTooltip(); openDetail(s.ev.id); });
-        week.appendChild(bar);
+        // 제목·아이콘은 가장 긴 구간에만 표시, 나머지 구간은 색 바만
+        let longest = 0;
+        s.runs.forEach((r, i) => { if (r[1] - r[0] > s.runs[longest][1] - s.runs[longest][0]) longest = i; });
+        s.runs.forEach((run, i) => {
+          const bar = document.createElement("div");
+          bar.className = "bar" + (mainHighlighted(s.ev) ? "" : " dimmed") + (st === "완료" ? " done" : "") + (isMile ? " milestone" : "") + (od ? " overdue" : "");
+          bar.style.background = colorOf(s.ev.category);
+          bar.style.top = (HEADER + s.lane * LANE) + "px";
+          bar.style.left = "calc(" + (run[0] / 7 * 100) + "% + 3px)";
+          bar.style.width = "calc(" + ((run[1] - run[0] + 1) / 7 * 100) + "% - 6px)";
+          bar.innerHTML = i !== longest ? "" :
+            (od ? '<span class="ic">⚠</span>' : st === "완료" ? '<span class="ic">✔</span>' : st === "컨펌대기" ? '<span class="ic">📩</span>' : isMile ? '<span class="ic">★</span>' : "")
+            + '<span class="bt">' + esc(s.ev.title) + "</span>"
+            + (subs.length ? '<span class="sub-chip">' + subDone + "/" + subs.length + "</span>" : "");
+          bar.addEventListener("mouseenter", () => showTooltip(s.ev, bar));
+          bar.addEventListener("mouseleave", hideTooltip);
+          bar.addEventListener("click", () => { hideTooltip(); openDetail(s.ev.id); });
+          week.appendChild(bar);
+        });
       });
 
       weeksEl.appendChild(week);
@@ -751,13 +958,14 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
       tabsEl.appendChild(b);
     };
     makeTab("전체", null, events);
+    makeTab("👑 팀장 확인", LEADER, events.filter(e => chk(e.id).confirm && !chk(e.id).done), "leader");
     makeTab("🤝 협업", COLLAB, events.filter(isCollab), "collab");
     owners.forEach(o => makeTab(o, o, events.filter(e => participates(e, o))));
 
     const body = document.getElementById("task-body");
     body.innerHTML = "";
 
-    const pass = ev => passPerson(ev) && passCat(ev);
+    const pass = ev => passPerson(ev) && passCat(ev) && passEvent(ev) && passSearch(ev);
     const rows = [];
     const mainsSorted = mains().sort((a, b) => a._start - b._start || a.id - b.id);
     mainsSorted.forEach(m => {
@@ -775,20 +983,21 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
     rows.forEach(({ ev, sub, orphan }) => {
       const c = chk(ev.id);
       const st = statusOf(ev);
+      const od = isOverdue(ev);
       const tr = document.createElement("tr");
-      tr.className = (st === "완료" ? "row-done " : "") + (sub ? "row-sub" : "");
+      tr.className = (st === "완료" ? "row-done " : "") + (sub ? "row-sub " : "") + (od ? "row-overdue" : "");
       const titleHtml = sub
         ? '<div class="t-title"><span class="sub-arrow">└</span><span class="t-dot" style="background:' + colorOf(ev.category) + '"></span>' + esc(ev.title)
           + (orphan ? ' <span class="t-parent-ref">(상위: ' + esc(orphan.title) + ")</span>" : "") + "</div>"
         : '<div class="t-title"><span class="t-dot" style="background:' + colorOf(ev.category) + '"></span>' + esc(ev.title)
           + (subsOf(ev.id).length ? ' <span class="t-parent-ref">세부 ' + subsOf(ev.id).filter(x => chk(x.id).done).length + "/" + subsOf(ev.id).length + "</span>" : "") + "</div>";
       tr.innerHTML =
-        '<td class="c"><input type="checkbox" class="chk" ' + (c.done ? "checked" : "") + "></td>" +
-        '<td class="c"><input type="checkbox" class="chk confirm" ' + (c.confirm ? "checked" : "") + "></td>" +
-        "<td>" + titleHtml + (ev.memo ? '<div class="t-memo"' + (sub ? ' style="padding-left:20px"' : "") + ">" + esc(ev.memo) + "</div>" : "") + "</td>" +
-        '<td class="t-date">' + periodOf(ev) + "</td>" +
-        '<td class="t-owner">' + ownerLabel(ev) + "</td>" +
-        '<td class="c"><span class="st-badge st-' + st + '">' + st + "</span></td>";
+        '<td class="c cell-done" data-label="완료"><input type="checkbox" class="chk" ' + (c.done ? "checked" : "") + "></td>" +
+        '<td class="c cell-confirm" data-label="컨펌요청"><input type="checkbox" class="chk confirm" ' + (c.confirm ? "checked" : "") + "></td>" +
+        '<td class="cell-title">' + titleHtml + (ev.memo ? '<div class="t-memo"' + (sub ? ' style="padding-left:20px"' : "") + ">" + esc(ev.memo) + "</div>" : "") + "</td>" +
+        '<td class="t-date cell-date" data-label="기간">' + periodOf(ev) + "</td>" +
+        '<td class="t-owner cell-owner" data-label="담당">' + ownerLabel(ev) + "</td>" +
+        '<td class="c cell-status" data-label="상태">' + (od ? '<span class="st-badge st-지연">지연</span> ' : "") + '<span class="st-badge st-' + st + '">' + st + "</span></td>";
       const [doneBox, confirmBox] = tr.querySelectorAll("input");
       doneBox.onchange = () => setCheck(ev.id, "done", doneBox.checked);
       confirmBox.onchange = () => setCheck(ev.id, "confirm", confirmBox.checked);
@@ -808,14 +1017,14 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
   const tt = document.getElementById("tooltip");
   function showTooltip(ev, anchor) {
     const st = statusOf(ev);
-    const isMile = ev.category === "마일스톤";
+    const isMile = ev.category === "중요일정";
     const subs = subsOf(ev.id);
     tt.innerHTML =
       '<span class="tt-cat" style="background:' + colorOf(ev.category) + (isMile ? ";color:#1E293B" : "") + '">' + esc(ev.category) + "</span>" +
       '<div class="tt-title">' + esc(ev.title) + "</div>" +
       '<div class="tt-row"><span class="k">기간</span><span>' + periodOf(ev) + "</span></div>" +
       '<div class="tt-row"><span class="k">담당</span><span>' + ownerLabel(ev) + "</span></div>" +
-      '<div class="tt-row"><span class="k">상태</span><span><span class="st-badge st-' + st + '">' + st + "</span></span></div>" +
+      '<div class="tt-row"><span class="k">상태</span><span><span class="st-badge st-' + st + '">' + st + "</span>" + (isOverdue(ev) ? ' <span class="st-badge st-지연">지연</span>' : "") + "</span></div>" +
       (ev.memo ? '<div class="tt-memo">' + esc(ev.memo) + "</div>" : "") +
       (subs.length
         ? '<div class="tt-click">▸ 세부업무 ' + subs.length + "건 — 클릭하면 열립니다</div>"
@@ -852,7 +1061,7 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
     const ev = byId(id);
     if (!ev) { closeDetail(); return; }
     const st = statusOf(ev);
-    const isMile = ev.category === "마일스톤";
+    const isMile = ev.category === "중요일정";
     const subs = subsOf(id);
     const c = chk(id);
 
@@ -860,6 +1069,7 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
       '<div class="d-head">' +
         '<span class="d-cat" style="background:' + colorOf(ev.category) + (isMile ? ";color:#1E293B" : "") + '">' + esc(ev.category) + "</span>" +
         '<span class="st-badge st-' + st + '" style="margin-top:2px">' + st + "</span>" +
+        (isOverdue(ev) ? '<span class="st-badge st-지연" style="margin-top:2px">지연</span>' : "") +
         '<button class="d-close" id="d-close-btn">✕</button>' +
       "</div>" +
       '<div class="d-title">' + esc(ev.title) + "</div>" +
@@ -897,14 +1107,66 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
     });
   }
 
+  // ---------- 🏷 행사 색인 토글 ----------
+  function renderEventToggles() {
+    const el = document.getElementById("event-toggles");
+    const tags = [...new Set(events.flatMap(eventsOf))];
+    if (!tags.length) { el.style.display = "none"; el.innerHTML = ""; return; }
+    el.style.display = "";
+    el.innerHTML = '<span class="et-label">🏷 행사</span>'
+      + '<button class="et-btn' + (eventFilter === null ? " active" : "") + '" data-ev="">전체</button>'
+      + tags.map(t => '<button class="et-btn' + (eventFilter === t ? " active" : "") + '" data-ev="'
+          + encodeURIComponent(t) + '">' + esc(t) + "</button>").join("");
+    el.querySelectorAll(".et-btn").forEach(b => {
+      b.onclick = () => {
+        const v = b.dataset.ev ? decodeURIComponent(b.dataset.ev) : null;
+        eventFilter = (eventFilter === v) ? null : v;
+        render();
+      };
+    });
+  }
+
+  // ---------- 검색 · 필터 초기화 바 ----------
+  const personLabel = v => v === COLLAB ? "🤝 협업" : v === LEADER ? "👑 팀장 확인" : v;
+  function renderFilterBar() {
+    const chips = [];
+    if (catFilter)    chips.push({ k: "분류", v: catFilter,             clear: () => { catFilter = null; } });
+    if (eventFilter)  chips.push({ k: "행사", v: eventFilter,           clear: () => { eventFilter = null; } });
+    if (personFilter) chips.push({ k: "담당", v: personLabel(personFilter), clear: () => { personFilter = null; } });
+    if (searchText)   chips.push({ k: "검색", v: searchText,            clear: () => { searchText = ""; document.getElementById("search-input").value = ""; } });
+
+    const box = document.getElementById("active-filters");
+    box.innerHTML = chips.map((c, i) =>
+      '<span class="filter-chip">' + esc(c.k) + ': ' + esc(c.v) + '<span class="x" data-i="' + i + '">✕</span></span>').join("");
+    box.querySelectorAll(".x").forEach(x => {
+      x.onclick = () => { chips[Number(x.dataset.i)].clear(); render(); };
+    });
+    document.getElementById("btn-filter-reset").style.display = chips.length ? "" : "none";
+    document.getElementById("search-clear").style.display = searchText ? "" : "none";
+  }
+
+  const searchInput = document.getElementById("search-input");
+  searchInput.addEventListener("input", () => { searchText = searchInput.value.trim(); render(); });
+  document.getElementById("search-clear").onclick = () => { searchText = ""; searchInput.value = ""; render(); };
+  document.getElementById("btn-filter-reset").onclick = () => {
+    catFilter = null; personFilter = null; eventFilter = null; searchText = ""; searchInput.value = "";
+    render();
+  };
+
   // ---------- 초기화 ----------
-  document.getElementById("legend").innerHTML = CATEGORIES.map(cat =>
-    "<span><i style=\"background:" + colorOf(cat) + "\"></i>" + cat + "</span>").join("");
+  // 범례: 분류 색상 + 상태 아이콘 설명
+  const catLegend = CATEGORIES.map(cat =>
+    '<span><i style="background:' + colorOf(cat) + '"></i>' + cat + "</span>").join("");
+  const statusLegend = [["✔", "완료", ""], ["📩", "컨펌 요청", ""], ["★", "중요일정", ""], ["⚠", "지연(기한 초과)", "od"]]
+    .map(([ic, t, cls]) => '<span><i class="lg-ic ' + cls + '">' + ic + "</i>" + t + "</span>").join("");
+  document.getElementById("legend").innerHTML = catLegend + '<i class="legend-sep"></i>' + statusLegend;
   document.getElementById("page-title").textContent = APP_TITLE;
 
   function render() {
     renderSummary();
+    renderEventToggles();
     renderProgress();
+    renderFilterBar();
     renderCalendar();
     renderPeople();
   }
