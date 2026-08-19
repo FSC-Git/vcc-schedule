@@ -229,9 +229,14 @@
   /* ---------- 지연(기한 초과) 표시 ---------- */
   .bar.overdue { box-shadow: 0 0 0 2px #DC2626 inset, 0 1px 2px rgba(15,23,42,.15); }
   .st-지연 { background: #FEE2E2; color: #DC2626; }
+  .st-오늘 { background: #DBEAFE; color: #1D4ED8; }
   .tasks tr.row-overdue td { background: #FEF6F6; }
   .tasks tr.row-overdue:hover td { background: #FEECEC; }
   .pstat .over b { color: #DC2626; }
+  .overdue-toggle { margin-left: auto; font-size: 12px; padding: 5px 12px; white-space: nowrap; }
+  .overdue-toggle b { font-weight: 800; color: var(--text-sub); }
+  .overdue-toggle.on { border-color: #DC2626; color: #DC2626; }
+  .overdue-toggle.on b { color: #DC2626; }
 
   /* ---------- 툴팁 ---------- */
   #tooltip {
@@ -413,6 +418,7 @@
       <span>미완료 <b id="st-todo">0</b></span>
       <span class="over">지연 <b id="st-over">0</b></span>
     </div>
+    <button class="btn overdue-toggle" id="btn-overdue" title="달력 막대에 지연(기한 초과) 빨간 테두리 표시">⚠ 지연 표시 <b id="overdue-state">OFF</b></button>
   </section>
 
   <section class="filter-bar">
@@ -480,6 +486,7 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
   const colorOf = c => COLORS[c] || "#94A3B8";
   const LS_EVENTS = "vccSchedule.events";
   const LS_CHECKS = "vccSchedule.checks";
+  const LS_OVERDUEBOX = "vccSchedule.overdueBox"; // 달력 지연 빨간 테두리 표시 여부
   const COLLAB = "__collab__";
   const LEADER = "__leader__";   // 👑 팀장 확인 탭: 컨펌요청 대기 업무 모아보기
 
@@ -495,6 +502,7 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
   let personFilter = null;    // 담당자명 | COLLAB | null
   let searchText = "";        // 업무·담당·메모 검색어
   let eventFilter = null;     // 🏷 행사 태그 필터 (null = 전체)
+  let showOverdueBox = false; // 달력 막대 지연 빨간 테두리 (기본 꺼짐, localStorage 저장)
   let view = null;            // { year, month }
   let detailId = null;
   let sourceInfo = "기본 데이터 (schedule-data.js)";
@@ -562,6 +570,8 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
   // 지연: 종료일이 오늘 이전인데 아직 완료가 아닌 업무
   const startOfToday = () => { const t = new Date(); return new Date(t.getFullYear(), t.getMonth(), t.getDate()); };
   const isOverdue = ev => !chk(ev.id).done && ev._end < startOfToday();
+  // 오늘 할 일: 오늘이 업무 기간 안(시작~종료)이고 아직 완료 아님
+  const isDueToday = ev => { const t = startOfToday(); return !chk(ev.id).done && ev._start <= t && ev._end >= t; };
 
   function normalizeEvents(raw) {
     const list = raw.map(ev => ({
@@ -662,6 +672,7 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
     const m = new Date(view.year, view.month - 1 + d, 1);
     view = { year: m.getFullYear(), month: m.getMonth() + 1 };
     renderCalendar();
+    renderPeople(); // 표도 해당 달 기준으로 다시 그림
   }
 
   // ---------- 엑셀 업로드 (로컬 모드 전용) ----------
@@ -873,21 +884,27 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
       });
       segs.sort((a, b) => a.c0 - b.c0 || (b.c1 - b.c0) - (a.c1 - a.c0));
 
-      // 레인 배치: 묶음 지정 업무는 고정 레인에, 나머지는 겹치지 않는 가장 낮은 레인에 채움
+      // 레인 배치
       const laneIv = []; // laneIv[lane] = [[c0,c1], ...]
       const fits = (lane, s) => !laneIv[lane] || laneIv[lane].every(([a, b]) => s.c1 < a || s.c0 > b);
       const put = (lane, s) => { (laneIv[lane] = laneIv[lane] || []).push([s.c0, s.c1]); s.lane = lane; };
-      segs.forEach(s => {
-        const g = String(s.ev.group || "").trim();
-        if (g && g in groupLane) put(groupLane[g], s);
-      });
-      segs.forEach(s => {
-        const g = String(s.ev.group || "").trim();
-        if (g && g in groupLane) return; // 이미 배치됨
-        let lane = 0;
-        while (!fits(lane, s)) lane++;
-        put(lane, s);
-      });
+      const packFrom = (list, base) => { list.forEach(s => { let lane = base; while (!fits(lane, s)) lane++; put(lane, s); }); };
+      const filterActive = !!(catFilter || personFilter || eventFilter || searchText);
+      if (filterActive) {
+        // 필터가 걸리면: 해당(하이라이트) 업무를 맨 윗줄부터 채우고, 흐린 업무는 그 아래로
+        packFrom(segs.filter(s => mainHighlighted(s.ev)), 0);
+        packFrom(segs.filter(s => !mainHighlighted(s.ev)), laneIv.length);
+      } else {
+        // 평상시: 같은 묶음은 같은 줄에 정렬(겹치면 아랫줄로), 나머지는 가장 낮은 빈 줄에
+        segs.forEach(s => {
+          const g = String(s.ev.group || "").trim();
+          if (!(g && g in groupLane)) return;
+          let lane = groupLane[g];
+          while (!fits(lane, s)) lane++;
+          put(lane, s);
+        });
+        packFrom(segs.filter(s => !(String(s.ev.group || "").trim() in groupLane)), 0);
+      }
       const laneCount = laneIv.length;
 
       const mob = window.innerWidth <= 560; // 모바일: 바 높이/간격 축소
@@ -923,7 +940,7 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
         s.runs.forEach((r, i) => { if (r[1] - r[0] > s.runs[longest][1] - s.runs[longest][0]) longest = i; });
         s.runs.forEach((run, i) => {
           const bar = document.createElement("div");
-          bar.className = "bar" + (mainHighlighted(s.ev) ? "" : " dimmed") + (st === "완료" ? " done" : "") + (isMile ? " milestone" : "") + (od ? " overdue" : "");
+          bar.className = "bar" + (mainHighlighted(s.ev) ? "" : " dimmed") + (st === "완료" ? " done" : "") + (isMile ? " milestone" : "") + (od && showOverdueBox ? " overdue" : "");
           bar.style.background = colorOf(s.ev.category);
           bar.style.top = (HEADER + s.lane * LANE) + "px";
           bar.style.left = "calc(" + (run[0] / 7 * 100) + "% + 3px)";
@@ -965,9 +982,24 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
     const body = document.getElementById("task-body");
     body.innerHTML = "";
 
-    const pass = ev => passPerson(ev) && passCat(ev) && passEvent(ev) && passSearch(ev);
+    // 현재 보고 있는 달과 겹치는 업무만 표에 표시 (단, 지연 업무는 달과 무관하게 항상 표시 — 밀린 일 놓치지 않게)
+    const mStart = new Date(view.year, view.month - 1, 1);
+    const mEnd = new Date(view.year, view.month, 0);
+    const inMonth = ev => (ev._start <= mEnd && ev._end >= mStart) || isOverdue(ev);
+    const pass = ev => inMonth(ev) && passPerson(ev) && passCat(ev) && passEvent(ev) && passSearch(ev);
     const rows = [];
-    const mainsSorted = mains().sort((a, b) => a._start - b._start || a.id - b.id);
+    // 개인 탭 선택 시: 지연(0) → 오늘 할 일(1) → 나머지(2) 순으로 상단 정렬 (세부업무 포함해 판단)
+    const personSelected = personFilter && personFilter !== COLLAB && personFilter !== LEADER;
+    const rankOf = ev => isOverdue(ev) ? 0 : isDueToday(ev) ? 1 : 2;
+    const famRank = m => {
+      const fam = pass(m) ? [m] : [];
+      subsOf(m.id).filter(pass).forEach(s => fam.push(s));
+      return fam.length ? Math.min(...fam.map(rankOf)) : 3;
+    };
+    const mainsSorted = mains().sort((a, b) => {
+      if (personSelected) { const r = famRank(a) - famRank(b); if (r) return r; }
+      return a._start - b._start || a.id - b.id;
+    });
     mainsSorted.forEach(m => {
       const mOk = pass(m);
       const subOk = subsOf(m.id).filter(pass);
@@ -984,6 +1016,7 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
       const c = chk(ev.id);
       const st = statusOf(ev);
       const od = isOverdue(ev);
+      const tdy = !od && isDueToday(ev);
       const tr = document.createElement("tr");
       tr.className = (st === "완료" ? "row-done " : "") + (sub ? "row-sub " : "") + (od ? "row-overdue" : "");
       const titleHtml = sub
@@ -997,7 +1030,7 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
         '<td class="cell-title">' + titleHtml + (ev.memo ? '<div class="t-memo"' + (sub ? ' style="padding-left:20px"' : "") + ">" + esc(ev.memo) + "</div>" : "") + "</td>" +
         '<td class="t-date cell-date" data-label="기간">' + periodOf(ev) + "</td>" +
         '<td class="t-owner cell-owner" data-label="담당">' + ownerLabel(ev) + "</td>" +
-        '<td class="c cell-status" data-label="상태">' + (od ? '<span class="st-badge st-지연">지연</span> ' : "") + '<span class="st-badge st-' + st + '">' + st + "</span></td>";
+        '<td class="c cell-status" data-label="상태">' + (od ? '<span class="st-badge st-지연">지연</span> ' : tdy ? '<span class="st-badge st-오늘">오늘</span> ' : "") + '<span class="st-badge st-' + st + '">' + st + "</span></td>";
       const [doneBox, confirmBox] = tr.querySelectorAll("input");
       doneBox.onchange = () => setCheck(ev.id, "done", doneBox.checked);
       confirmBox.onchange = () => setCheck(ev.id, "confirm", confirmBox.checked);
@@ -1151,6 +1184,21 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
   document.getElementById("btn-filter-reset").onclick = () => {
     catFilter = null; personFilter = null; eventFilter = null; searchText = ""; searchInput.value = "";
     render();
+  };
+
+  // ---------- 지연(기한 초과) 빨간 테두리 토글 (기본 꺼짐) ----------
+  const overdueBtn = document.getElementById("btn-overdue");
+  try { showOverdueBox = localStorage.getItem(LS_OVERDUEBOX) === "1"; } catch (e) {}
+  const syncOverdueBtn = () => {
+    overdueBtn.classList.toggle("on", showOverdueBox);
+    document.getElementById("overdue-state").textContent = showOverdueBox ? "ON" : "OFF";
+  };
+  syncOverdueBtn();
+  overdueBtn.onclick = () => {
+    showOverdueBox = !showOverdueBox;
+    try { localStorage.setItem(LS_OVERDUEBOX, showOverdueBox ? "1" : "0"); } catch (e) {}
+    syncOverdueBtn();
+    renderCalendar();
   };
 
   // ---------- 초기화 ----------
