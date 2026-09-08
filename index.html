@@ -864,15 +864,19 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
 
     weeks.forEach(days => {
       const wkStart = days[0], wkEnd = days[6];
-      // 일정 기간 중 이 주에 속하는 "작업일(주말·공휴일 제외)" 칸만 골라 연속 구간(runs)으로 묶음
+      // 일정 기간 중 이 주에 속하는 칸을 골라 연속 구간(runs)으로 묶음
+      // 여러 날 걸친 업무의 "중간" 주말·공휴일은 건너뛰되,
+      // 시작일/종료일이 주말·공휴일이면(= 직접 그 날에 쓴 업무) 표시함
       const segs = [];
       mains().forEach(ev => {
         if (ev._start > wkEnd || ev._end < wkStart) return;
         const cols = [];
         for (let i = 0; i < 7; i++) {
-          if (days[i] >= ev._start && days[i] <= ev._end && isWorkday(days[i])) cols.push(i);
+          const d = days[i];
+          if (d < ev._start || d > ev._end) continue;
+          if (isWorkday(d) || sameDay(d, ev._start) || sameDay(d, ev._end)) cols.push(i);
         }
-        if (!cols.length) return; // 이 주에서는 작업일이 없음 (주말·공휴일만 걸침)
+        if (!cols.length) return; // 이 주에서는 표시할 칸이 없음 (중간 주말·공휴일만 걸침)
         const runs = [];
         let rs = cols[0], prev = cols[0];
         for (let k = 1; k <= cols.length; k++) {
