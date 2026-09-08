@@ -647,17 +647,33 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
       .catch(() => setSrcLine('<span class="err">⚠ 체크 저장 실패 — 네트워크 확인 후 다시 체크해주세요. (화면 표시는 임시 반영 상태)</span>'));
   }
 
+  // 첫 화면 달: 오늘이 속한 달을 우선 표시하되(오늘 달에 업무가 없으면
+  // 업무가 있는 가장 가까운 달로 이동 — 빈 화면 방지)
   function detectMonth() {
-    const cnt = {};
+    const now = new Date();
+    const curY = now.getFullYear(), curM = now.getMonth() + 1;
+    const mStart = new Date(curY, curM - 1, 1);
+    const mEnd = new Date(curY, curM, 0);
+    if (!events.length) return { year: curY, month: curM };
+    // 오늘 달에 걸치는 업무가 하나라도 있으면 오늘 달
+    if (events.some(ev => ev._start <= mEnd && ev._end >= mStart)) {
+      return { year: curY, month: curM };
+    }
+    // 없으면: 업무가 있는 달 중 오늘 달에서 가장 가까운 달 (동률이면 미래 우선)
+    const months = new Set();
     events.forEach(ev => {
-      const k = ev._start.getFullYear() + "-" + ev._start.getMonth();
-      cnt[k] = (cnt[k] || 0) + 1;
+      const d = new Date(ev._start.getFullYear(), ev._start.getMonth(), 1);
+      while (d <= ev._end) { months.add(d.getFullYear() + "-" + (d.getMonth() + 1)); d.setMonth(d.getMonth() + 1); }
     });
-    let best = null, n = -1;
-    Object.entries(cnt).forEach(([k, v]) => { if (v > n) { n = v; best = k; } });
-    if (!best) { const now = new Date(); return { year: now.getFullYear(), month: now.getMonth() + 1 }; }
-    const [y, m] = best.split("-").map(Number);
-    return { year: y, month: m + 1 };
+    const curIdx = curY * 12 + curM;
+    let best = null, bestScore = Infinity;
+    months.forEach(k => {
+      const [y, m] = k.split("-").map(Number);
+      const diff = (y * 12 + m) - curIdx;
+      const score = Math.abs(diff) * 2 + (diff < 0 ? 1 : 0); // 가까울수록 작게, 과거면 살짝 페널티
+      if (score < bestScore) { bestScore = score; best = { year: y, month: m }; }
+    });
+    return best || { year: curY, month: curM };
   }
 
   document.getElementById("btn-prev").onclick = () => shiftMonth(-1);
