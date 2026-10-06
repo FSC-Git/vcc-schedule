@@ -47,7 +47,7 @@
   .src-line .err { color: #DC2626; }
 
   /* ---------- 요약 카드 (대시보드) ---------- */
-  .summary { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-bottom: 10px; }
+  .summary { display: grid; grid-template-columns: repeat(8, 1fr); gap: 10px; margin-bottom: 10px; }
   .sum-card {
     background: var(--card); border: 1.5px solid var(--border); border-radius: 12px;
     padding: 12px 14px; cursor: pointer; position: relative; overflow: hidden;
@@ -122,6 +122,39 @@
     padding: 0 6px; font-size: 10.5px; font-weight: 800; line-height: 16px;
   }
   .bar.milestone .sub-chip { background: rgba(30,41,59,.15); }
+  /* 홍보당일: 보라 바탕이라 글자는 흰색, 테두리만 진한 보라 */
+  .bar.milestone.promo { color: #fff; box-shadow: 0 0 0 1.5px #4C1D95 inset, 0 1px 2px rgba(15,23,42,.15); }
+  .bar.milestone.promo .sub-chip { background: rgba(255,255,255,.28); }
+
+  /* ---------- 🌴 휴가 ---------- */
+  .cell-head { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+  .vac-badge {
+    border: 1px solid #A7F3D0; background: #ECFDF5; color: #047857;
+    font: inherit; font-size: 10.5px; font-weight: 800; line-height: 16px;
+    padding: 0 6px; border-radius: 999px; cursor: pointer; white-space: nowrap;
+  }
+  .vac-badge:hover { background: #D1FAE5; }
+  .vac-badge.mine { background: #059669; border-color: #059669; color: #fff; }
+  .cell.vac-mine:not(.today):not(.holiday) { background: #F0FDF4; }
+  #vac-pop {
+    position: fixed; z-index: 110; width: 270px; max-width: calc(100vw - 16px);
+    background: #fff; border: 1.5px solid var(--border); border-radius: 12px;
+    box-shadow: 0 12px 32px rgba(15,23,42,.18); padding: 12px 14px; display: none;
+  }
+  #vac-pop .vp-head { display: flex; align-items: center; gap: 4px; font-size: 13.5px; font-weight: 700; margin-bottom: 6px; }
+  #vac-pop .vp-head b { color: #047857; }
+  #vac-pop .vp-close {
+    margin-left: auto; border: none; background: #F1F5F9; color: var(--text-sub);
+    width: 24px; height: 24px; border-radius: 7px; cursor: pointer; font-size: 12px; font-weight: 700;
+  }
+  #vac-pop .vp-item { padding: 7px 0; border-top: 1px solid #F1F5F9; }
+  #vac-pop .vp-row { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+  #vac-pop .vp-name { font-weight: 800; }
+  #vac-pop .vp-item.mine .vp-name { color: #059669; }
+  #vac-pop .vp-kind { font-size: 11px; font-weight: 800; padding: 1px 7px; border-radius: 999px; background: #ECFDF5; color: #047857; white-space: nowrap; }
+  #vac-pop .vp-kind.half { background: #FEF3C7; color: #B45309; }
+  #vac-pop .vp-period { margin-left: auto; font-size: 12px; color: var(--text-sub); font-weight: 600; white-space: nowrap; }
+  #vac-pop .vp-memo { margin-top: 3px; font-size: 11.5px; color: var(--text-sub); line-height: 1.4; }
 
   /* ---------- 범례 ---------- */
   .legend { display: flex; gap: 16px; margin: 14px 0 26px; flex-wrap: wrap; }
@@ -305,7 +338,7 @@
     .toolbar { margin-left: 0; width: 100%; }
     .toolbar .btn { flex: 1; padding: 8px 4px; font-size: 12px; white-space: nowrap; }
     .src-line { font-size: 11.5px; word-break: keep-all; }
-    .summary { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .summary { grid-template-columns: repeat(4, 1fr); gap: 6px; }
     .sum-card { padding: 8px 9px; border-radius: 10px; }
     .sum-card .label { font-size: 11px; }
     .sum-card .count { font-size: 17px; }
@@ -319,6 +352,8 @@
     .cell .num { font-size: 10.5px; }
     .cell.today .num { width: 18px; height: 18px; }
     .cell .holi-name { font-size: 8.5px; }
+    .cell-head { gap: 2px; }
+    .vac-badge { font-size: 8.5px; line-height: 12px; padding: 0 3px; }
     .bar { height: 17px; font-size: 9.5px; padding: 0 4px; gap: 2px; border-radius: 4px; }
     .bar .ic { font-size: 8.5px; }
     .bar .sub-chip { font-size: 8.5px; line-height: 12px; padding: 0 4px; }
@@ -464,6 +499,7 @@
 <div id="tooltip"></div>
 <div id="detail-backdrop"></div>
 <div id="detail"></div>
+<div id="vac-pop" role="dialog" aria-label="휴가자"></div>
 
 <script src="xlsx.full.min.js"></script>
 <script>
@@ -473,16 +509,19 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
 </script>
 <script>
 (function () {
-  const CATEGORIES = ["교육", "영상", "디자인", "홈페이지", "마케팅", "중요일정"];
-  const CAT_ALIAS = { "강사섭외": "교육", "강사 섭외": "교육", "마일스톤": "중요일정" };
+  const CATEGORIES = ["교육", "영상", "디자인", "홈페이지", "마케팅", "중요일정", "홍보당일"];
+  const CAT_ALIAS = { "강사섭외": "교육", "강사 섭외": "교육", "마일스톤": "중요일정", "홍보 당일": "홍보당일" };
   const COLORS = {
     "교육":     "#EC4899",
     "영상":     "#2196F3",
     "디자인":   "#0F766E",
     "홈페이지": "#C2410C",
     "마케팅":   "#6B7280",
-    "중요일정": "#F5A623"
+    "중요일정": "#F5A623",
+    "홍보당일": "#7C3AED"
   };
+  // 마일스톤형 분류: 달력 막대에 아이콘 + 테두리 강조
+  const MILE_ICON = { "중요일정": "★", "홍보당일": "📣" };
   const colorOf = c => COLORS[c] || "#94A3B8";
   const LS_EVENTS = "vccSchedule.events";
   const LS_CHECKS = "vccSchedule.checks";
@@ -503,6 +542,7 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
   let searchText = "";        // 업무·담당·메모 검색어
   let eventFilter = null;     // 🏷 행사 태그 필터 (null = 전체)
   let showOverdueBox = false; // 달력 막대 지연 빨간 테두리 (기본 꺼짐, localStorage 저장)
+  let vacations = [];         // 🌴 휴가 [{ name, kind, memo, _start, _end }] — 업무가 아니라 진행률·업무표엔 안 섞임
   let view = null;            // { year, month }
   let detailId = null;
   let sourceInfo = "기본 데이터 (schedule-data.js)";
@@ -572,6 +612,28 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
   // 오늘 할 일: 오늘이 업무 기간 안(시작~종료)이고 아직 완료 아님
   const isDueToday = ev => { const t = startOfToday(); return !chk(ev.id).done && ev._start <= t && ev._end >= t; };
 
+  // ---------- 휴가 ----------
+  // 원본: { name, start, end?, kind?, memo? } — 이름에 쉼표로 여러 명을 적으면 각각 등록
+  function normalizeVacations(raw) {
+    const out = [];
+    (raw || []).forEach(v => {
+      if (!v || !v.start) return;
+      const s = parse(String(v.start));
+      if (isNaN(s)) return;
+      let e = v.end ? parse(String(v.end)) : s;
+      if (isNaN(e) || e < s) e = s;
+      String(v.name || "").split(/[,·/]+/).map(n => n.trim()).filter(Boolean).forEach(name =>
+        out.push({ name, kind: String(v.kind || "").trim(), memo: String(v.memo || "").trim(), _start: s, _end: e }));
+    });
+    return out;
+  }
+  // 그 날 휴가자: 기간 중 작업일만 (단, 시작일/종료일이 주말·공휴일이면 그 날도 표시 — 업무 막대와 같은 규칙)
+  const vacationsOn = d => vacations.filter(v =>
+    d >= v._start && d <= v._end && (isWorkday(d) || sameDay(d, v._start) || sameDay(d, v._end)));
+  const isHalf = v => /반차|반일/.test(v.kind);
+  // 개인(담당자) 탭이 선택된 경우 그 이름, 아니면 null
+  const selPerson = () => (personFilter && personFilter !== COLLAB && personFilter !== LEADER) ? personFilter : null;
+
   function normalizeEvents(raw) {
     const list = raw.map(ev => ({
       ...ev,
@@ -604,9 +666,11 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
     try { saved = JSON.parse(localStorage.getItem(LS_EVENTS)); } catch (e) {}
     if (saved && Array.isArray(saved.events) && saved.events.length) {
       events = normalizeEvents(saved.events);
+      vacations = normalizeVacations(saved.vacations);
       sourceInfo = "엑셀 업로드: <b>" + esc(saved.fileName) + "</b> (" + esc(saved.uploadedAt) + ")";
     } else {
       events = normalizeEvents(SCHEDULE_DATA.events);
+      vacations = normalizeVacations(SCHEDULE_DATA.vacations);
       sourceInfo = "기본 데이터 (schedule-data.js) — 엑셀 업로드로 교체할 수 있습니다";
     }
     view = detectMonth();
@@ -624,6 +688,7 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
     let data;
     try { data = JSON.parse(text); } catch (e) { throw new Error("응답 형식 오류 — 웹 앱 배포 설정(액세스: 모든 사용자)을 확인하세요"); }
     events = normalizeEvents(data.events || []);
+    vacations = normalizeVacations(data.vacations); // Apps Script 재배포 전이면 비어 있음(기존 기능엔 영향 없음)
     checks = data.checks || {};
     if (!view) view = detectMonth();
     render();
@@ -709,11 +774,12 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
   function handleFile(file) {
     const reader = new FileReader();
     reader.onload = e => {
-      let rows;
+      let rows, vacRows = [];
       try {
         const wb = XLSX.read(new Uint8Array(e.target.result), { type: "array", cellDates: true });
         const ws = wb.Sheets["일정"] || wb.Sheets[wb.SheetNames[0]];
         rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
+        if (wb.Sheets["휴가"]) vacRows = XLSX.utils.sheet_to_json(wb.Sheets["휴가"], { header: 1, defval: null });
       } catch (err) {
         setSrcLine('<span class="err">⚠ 파일을 읽지 못했습니다. 엑셀(.xlsx) 파일인지 확인해주세요.</span>');
         return;
@@ -760,12 +826,28 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
         return;
       }
 
+      // 휴가 시트(선택): 이름 | 시작일 | 종료일 | 종류 | 메모
+      const parsedVac = [];
+      const vhi = vacRows.findIndex(r => r && r.includes("이름") && r.includes("시작일"));
+      if (vhi !== -1) {
+        const vc = {};
+        vacRows[vhi].forEach((h, i) => { if (h != null) vc[String(h).trim()] = i; });
+        const cellStr = (r, k) => vc[k] != null && r[vc[k]] != null ? String(r[vc[k]]).trim() : "";
+        vacRows.slice(vhi + 1).forEach(r => {
+          if (!r) return;
+          const name = cellStr(r, "이름");
+          const start = excelDate(r[vc["시작일"]]);
+          if (!name || !start) return;
+          parsedVac.push({ name, start, end: excelDate(r[vc["종료일"]]) || undefined, kind: cellStr(r, "종류"), memo: cellStr(r, "메모") });
+        });
+      }
+
       const uploadedAt = new Date().toLocaleString("ko-KR");
-      localStorage.setItem(LS_EVENTS, JSON.stringify({ fileName: file.name, uploadedAt, events: parsed }));
+      localStorage.setItem(LS_EVENTS, JSON.stringify({ fileName: file.name, uploadedAt, events: parsed, vacations: parsedVac }));
       loadState();
       personFilter = null; catFilter = null;
       render();
-      let msg = "✅ <b>" + parsed.length + "건</b> 반영됨 — " + sourceInfo;
+      let msg = "✅ <b>" + parsed.length + "건</b>" + (parsedVac.length ? " + 휴가 <b>" + parsedVac.length + "건</b>" : "") + " 반영됨 — " + sourceInfo;
       if (skipped.length) msg += ' <span class="err">/ 제외: ' + esc(skipped.join(", ")) + "</span>";
       setSrcLine(msg);
     };
@@ -934,15 +1016,22 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
 
       const cells = document.createElement("div");
       cells.className = "cells";
+      const me = selPerson();
       days.forEach(d => {
         const holiName = HOLIDAYS[ymd(d)];
+        // 휴가자 뱃지: 날짜 옆 🌴인원수, 클릭하면 휴가자 상세 / 담당자 탭 선택 시 그 사람 휴가일 강조
+        const vacs = vacationsOn(d);
+        const mine = !!me && vacs.some(v => v.name === me);
         const cell = document.createElement("div");
         cell.className = "cell"
           + (d.getMonth() !== month - 1 ? " other" : "")
           + (d.getDay() === 0 ? " sun" : "") + (d.getDay() === 6 ? " sat" : "")
           + (holiName ? " holiday" : "")
-          + (sameDay(d, today) ? " today" : "");
-        cell.innerHTML = '<span class="num">' + d.getDate() + "</span>"
+          + (sameDay(d, today) ? " today" : "")
+          + (mine ? " vac-mine" : "");
+        cell.innerHTML = '<div class="cell-head"><span class="num">' + d.getDate() + "</span>"
+          + (vacs.length ? '<button type="button" class="vac-badge' + (mine ? " mine" : "") + '" data-date="' + ymd(d) + '" title="휴가자 ' + vacs.length + '명 — 클릭해서 보기">🌴' + vacs.length + "</button>" : "")
+          + "</div>"
           + (holiName ? '<span class="holi-name">' + esc(holiName) + "</span>" : "");
         cells.appendChild(cell);
       });
@@ -951,7 +1040,8 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
       segs.forEach(s => {
         const st = statusOf(s.ev);
         const od = isOverdue(s.ev);
-        const isMile = s.ev.category === "중요일정";
+        const mileIc = MILE_ICON[s.ev.category];
+        const isMile = !!mileIc;
         const subs = subsOf(s.ev.id);
         const subDone = subs.filter(x => chk(x.id).done).length;
         // 제목·아이콘은 가장 긴 구간에만 표시, 나머지 구간은 색 바만
@@ -959,13 +1049,13 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
         s.runs.forEach((r, i) => { if (r[1] - r[0] > s.runs[longest][1] - s.runs[longest][0]) longest = i; });
         s.runs.forEach((run, i) => {
           const bar = document.createElement("div");
-          bar.className = "bar" + (mainHighlighted(s.ev) ? "" : " dimmed") + (st === "완료" ? " done" : "") + (isMile ? " milestone" : "") + (od && showOverdueBox ? " overdue" : "");
+          bar.className = "bar" + (mainHighlighted(s.ev) ? "" : " dimmed") + (st === "완료" ? " done" : "") + (isMile ? " milestone" : "") + (s.ev.category === "홍보당일" ? " promo" : "") + (od && showOverdueBox ? " overdue" : "");
           bar.style.background = colorOf(s.ev.category);
           bar.style.top = (HEADER + s.lane * LANE) + "px";
           bar.style.left = "calc(" + (run[0] / 7 * 100) + "% + 3px)";
           bar.style.width = "calc(" + ((run[1] - run[0] + 1) / 7 * 100) + "% - 6px)";
           bar.innerHTML = i !== longest ? "" :
-            (od ? '<span class="ic">⚠</span>' : st === "완료" ? '<span class="ic">✔</span>' : st === "컨펌대기" ? '<span class="ic">📩</span>' : isMile ? '<span class="ic">★</span>' : "")
+            (od ? '<span class="ic">⚠</span>' : st === "완료" ? '<span class="ic">✔</span>' : st === "컨펌대기" ? '<span class="ic">📩</span>' : isMile ? '<span class="ic">' + mileIc + "</span>" : "")
             + '<span class="bt">' + esc(s.ev.title) + "</span>"
             + (subs.length ? '<span class="sub-chip">' + subDone + "/" + subs.length + "</span>" : "");
           bar.addEventListener("mouseenter", () => showTooltip(s.ev, bar));
@@ -1107,7 +1197,47 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
     backdropEl.style.display = "none";
   }
   backdropEl.onclick = closeDetail;
-  document.addEventListener("keydown", e => { if (e.key === "Escape") closeDetail(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") { closeDetail(); closeVacPop(); } });
+
+  // ---------- 🌴 휴가자 팝업 (날짜 옆 뱃지 클릭) ----------
+  const vacPop = document.getElementById("vac-pop");
+  let vacPopDate = null;
+  function openVacPop(dateStr, anchor) {
+    const d = parse(dateStr);
+    const list = vacationsOn(d).slice().sort((a, b) => a.name.localeCompare(b.name, "ko"));
+    if (!list.length) return;
+    const me = selPerson();
+    vacPop.innerHTML =
+      '<div class="vp-head">🌴 ' + fmt(d) + ' 휴가자 <b>' + list.length + '명</b>'
+      + '<button type="button" class="vp-close" aria-label="닫기">✕</button></div>'
+      + list.map(v =>
+        '<div class="vp-item' + (v.name === me ? " mine" : "") + '">'
+        + '<div class="vp-row"><span class="vp-name">' + esc(v.name) + "</span>"
+        + (v.kind ? '<span class="vp-kind' + (isHalf(v) ? " half" : "") + '">' + esc(v.kind) + "</span>" : "")
+        + '<span class="vp-period">' + esc(periodOf(v)) + "</span></div>"
+        + (v.memo ? '<div class="vp-memo">' + esc(v.memo) + "</div>" : "")
+        + "</div>").join("");
+    vacPop.style.display = "block";
+    vacPopDate = dateStr;
+    // 뱃지 바로 아래에 띄우되 화면 밖으로 넘치지 않게
+    const r = anchor.getBoundingClientRect();
+    const w = vacPop.offsetWidth, h = vacPop.offsetHeight;
+    let top = r.bottom + 6;
+    if (top + h > window.innerHeight - 8) top = Math.max(8, r.top - h - 6);
+    vacPop.style.left = Math.min(Math.max(8, r.left), window.innerWidth - w - 8) + "px";
+    vacPop.style.top = top + "px";
+  }
+  function closeVacPop() { vacPop.style.display = "none"; vacPopDate = null; }
+  document.addEventListener("click", e => {
+    const badge = e.target.closest(".vac-badge");
+    if (badge) {
+      if (vacPopDate === badge.dataset.date) closeVacPop();   // 같은 뱃지 다시 누르면 닫기
+      else openVacPop(badge.dataset.date, badge);
+      return;
+    }
+    if (e.target.closest(".vp-close") || !e.target.closest("#vac-pop")) closeVacPop();
+  });
+  window.addEventListener("scroll", () => { if (vacPopDate) closeVacPop(); }, { passive: true });
 
   function fillDetail(id) {
     const ev = byId(id);
@@ -1224,7 +1354,7 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
   // 범례: 분류 색상 + 상태 아이콘 설명
   const catLegend = CATEGORIES.map(cat =>
     '<span><i style="background:' + colorOf(cat) + '"></i>' + cat + "</span>").join("");
-  const statusLegend = [["✔", "완료", ""], ["📩", "컨펌 요청", ""], ["★", "중요일정", ""], ["⚠", "지연(기한 초과)", "od"]]
+  const statusLegend = [["✔", "완료", ""], ["📩", "컨펌 요청", ""], ["★", "중요일정", ""], ["📣", "홍보당일", ""], ["⚠", "지연(기한 초과)", "od"], ["🌴", "휴가자(날짜 옆 클릭)", ""]]
     .map(([ic, t, cls]) => '<span><i class="lg-ic ' + cls + '">' + ic + "</i>" + t + "</span>").join("");
   document.getElementById("legend").innerHTML = catLegend + '<i class="legend-sep"></i>' + statusLegend;
   document.getElementById("page-title").textContent = APP_TITLE;
