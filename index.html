@@ -129,11 +129,21 @@
   /* ---------- 🌴 휴가 ---------- */
   .cell-head { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
   .vac-badge {
-    border: 1px solid #A7F3D0; background: #ECFDF5; color: #047857;
-    font: inherit; font-size: 10.5px; font-weight: 800; line-height: 16px;
-    padding: 0 6px; border-radius: 999px; cursor: pointer; white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 2px;
+    border: 1.5px solid #34D399; background: #D1FAE5; color: #065F46;
+    font: inherit; font-size: 11px; font-weight: 800; line-height: 16px;
+    padding: 0 7px 0 5px; border-radius: 999px; cursor: pointer; white-space: nowrap;
   }
-  .vac-badge:hover { background: #D1FAE5; }
+  .vac-badge b { font-weight: 900; margin-left: 2px; }
+  .vac-badge .vb-u { font-weight: 700; }
+  .vac-badge:hover { background: #A7F3D0; }
+  /* 화면이 좁으면(≤1000px) 날짜 옆에 다 안 들어가므로 날짜 아래 줄에 표시
+     (그 주의 막대 시작 위치는 renderCalendar에서 그만큼 내림 — 1000 기준을 바꾸면 JS도 같이) */
+  @media (max-width: 1000px) {
+    .cell-head { flex-direction: column; align-items: flex-start; gap: 2px; }
+    .vac-badge { font-size: 10.5px; }
+    .vac-badge .vb-u { display: none; }
+  }
   .vac-badge.mine { background: #059669; border-color: #059669; color: #fff; }
   .cell.vac-mine:not(.today):not(.holiday) { background: #F0FDF4; }
   #vac-pop {
@@ -353,7 +363,9 @@
     .cell.today .num { width: 18px; height: 18px; }
     .cell .holi-name { font-size: 8.5px; }
     .cell-head { gap: 2px; }
-    .vac-badge { font-size: 8.5px; line-height: 12px; padding: 0 3px; }
+    .vac-badge { font-size: 8.5px; line-height: 12px; padding: 0 3px; gap: 0; border-width: 1px; }
+    .vac-badge b { margin-left: 1px; }
+    .vac-badge .vb-ic, .vac-badge .vb-u { display: none; } /* 칸이 좁아 모바일은 "휴가2"만 */
     .bar { height: 17px; font-size: 9.5px; padding: 0 4px; gap: 2px; border-radius: 4px; }
     .bar .ic { font-size: 8.5px; }
     .bar .sub-chip { font-size: 8.5px; line-height: 12px; padding: 0 4px; }
@@ -1009,7 +1021,9 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
       const laneCount = laneIv.length;
 
       const mob = window.innerWidth <= 560; // 모바일: 바 높이/간격 축소
-      const HEADER = mob ? 24 : 34, LANE = mob ? 20 : 28, PAD = mob ? 5 : 8;
+      // 좁은 화면에서 휴가 뱃지가 날짜 아래 줄로 내려가는 주는 막대 시작 위치를 그만큼 내림 (CSS의 1000px 기준과 동일)
+      const vacRow = window.innerWidth <= 1000 && days.some(d => vacationsOn(d).length) ? (mob ? 15 : 21) : 0;
+      const HEADER = (mob ? 24 : 34) + vacRow, LANE = mob ? 20 : 28, PAD = mob ? 5 : 8;
       const week = document.createElement("div");
       week.className = "week";
       week.style.height = Math.max(mob ? 60 : 96, HEADER + laneCount * LANE + PAD) + "px";
@@ -1030,7 +1044,8 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
           + (sameDay(d, today) ? " today" : "")
           + (mine ? " vac-mine" : "");
         cell.innerHTML = '<div class="cell-head"><span class="num">' + d.getDate() + "</span>"
-          + (vacs.length ? '<button type="button" class="vac-badge' + (mine ? " mine" : "") + '" data-date="' + ymd(d) + '" title="휴가자 ' + vacs.length + '명 — 클릭해서 보기">🌴' + vacs.length + "</button>" : "")
+          + (vacs.length ? '<button type="button" class="vac-badge' + (mine ? " mine" : "") + '" data-date="' + ymd(d) + '" title="휴가자 ' + vacs.length + '명 — 클릭해서 보기">'
+            + '<span class="vb-ic">🌴</span>휴가<b>' + vacs.length + '</b><span class="vb-u">명</span></button>' : "")
           + "</div>"
           + (holiName ? '<span class="holi-name">' + esc(holiName) + "</span>" : "");
         cells.appendChild(cell);
@@ -1354,7 +1369,7 @@ document.write('<script src="config.js?v=' + Date.now() + '"><\/script>');
   // 범례: 분류 색상 + 상태 아이콘 설명
   const catLegend = CATEGORIES.map(cat =>
     '<span><i style="background:' + colorOf(cat) + '"></i>' + cat + "</span>").join("");
-  const statusLegend = [["✔", "완료", ""], ["📩", "컨펌 요청", ""], ["★", "중요일정", ""], ["📣", "홍보당일", ""], ["⚠", "지연(기한 초과)", "od"], ["🌴", "휴가자(날짜 옆 클릭)", ""]]
+  const statusLegend = [["✔", "완료", ""], ["📩", "컨펌 요청", ""], ["★", "중요일정", ""], ["📣", "홍보당일", ""], ["⚠", "지연(기한 초과)", "od"], ["🌴", "휴가자(휴가 뱃지 클릭)", ""]]
     .map(([ic, t, cls]) => '<span><i class="lg-ic ' + cls + '">' + ic + "</i>" + t + "</span>").join("");
   document.getElementById("legend").innerHTML = catLegend + '<i class="legend-sep"></i>' + statusLegend;
   document.getElementById("page-title").textContent = APP_TITLE;
